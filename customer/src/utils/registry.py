@@ -1,4 +1,4 @@
-from  src.tools.functions.functions import GetCustomerDetails, GetCustomerMetadata, GetCustomerMetrics, GetCustomerPaymentInformation
+from  src.functions.functions import GetCustomerDetails, GetCustomerMetadata, GetCustomerMetrics, GetCustomerPaymentInformation
 
 function_registry = {
     "GetCustomerDetails":GetCustomerDetails,
