@@ -6,10 +6,19 @@ from src.utils.graph import connection
 from src.dao.details import CustomerDetails
 import json
 
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # Load variables from .env
+
+BASE_URL = os.getenv("API_BASE_URL")
+
 Customer = connection.create_node(CustomerDetails)
 Metadata = connection.create_node(CustomerMetadata)
 Metrics = connection.create_node(CustomerOrderMetrics)
 Payments = connection.create_node(CustomerPaymentData)
+
+# todo: read the url from the .env 
 
 def GetCustomerDetails(customer_id):
     if customer_id != "customer_id":
@@ -17,9 +26,8 @@ def GetCustomerDetails(customer_id):
         print("Received keyword arguments:", customer_id)
 
         try:
-            response = get(f"http://localhost:8000/v1/customer/details/{customer_id}")
-            response.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
-
+            response = get(f"{BASE_URL}/v1/customer/details/{customer_id}")
+            
             # Step 1: Decode binary to string
             json_string = response.content.decode("utf-8")
 
@@ -42,7 +50,7 @@ def GetCustomerMetadata(customer_id):
         print("Received keyword arguments:", customer_id)
         
         try:
-            response = get(f"http://localhost:8000/v1/customer/metadata/{customer_id}")
+            response = get(f"{BASE_URL}/v1/customer/metadata/{customer_id}")
             response.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
             
             # Step 1: Decode binary to string
@@ -67,7 +75,7 @@ def GetCustomerMetrics(customer_id):
         print("Received keyword arguments:", customer_id)
         
         try:
-            response = get(f"http://localhost:8000/v1/customer/metrics/{customer_id}")
+            response = get(f"{BASE_URL}/v1/customer/metrics/{customer_id}")
             response.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
             
             # Step 1: Decode binary to string
@@ -91,7 +99,7 @@ def GetCustomerPaymentInformation(customer_id):
         print("Received keyword arguments:", customer_id)
         
         try:
-            response = get(f"http://localhost:8000/v1/customer/payment-data/{customer_id}")
+            response = get(f"{BASE_URL}/v1/customer/payment-data/{customer_id}")
             response.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
 
             # todo: use this data to create a customer-payment node in neo4j
