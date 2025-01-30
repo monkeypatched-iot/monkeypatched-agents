@@ -9,6 +9,7 @@ import re
 import json
 import logging
 from src.utils.invoker import invoke
+from neomodel import StructuredNode, StringProperty, RelationshipTo, RelationshipFrom, db
 
 logging.basicConfig(level=logging.INFO)
 
@@ -20,7 +21,7 @@ app = FastAPI()
 def create_customer_nodes_in_knowledge_graph_helper(customer_id:str):
 
     prompt_template = PromptTemplate(input_variables=["parameters"], template="""
-    YHuman: 
+    Human: 
     You are a system that aggregates data from multiple APIs and constructs a knowledge graph based on the retrieved information. To accomplish this, follow the steps outlined below:
 
     Steps:
@@ -40,6 +41,12 @@ def create_customer_nodes_in_knowledge_graph_helper(customer_id:str):
     4️. Retrieve Customer Payment Information  
     - **Step:** 4  
     - **Action:** GetCustomerPaymentInformation (parameters: {parameters}) 
+                                     
+    5. Add a customer
+    - **Step:** 5 
+    - **Action:** AddCustomer (parameters: {parameters}) 
+                                     
+
 
     Response Format:  
     For each step, return the response in the exact format below:
@@ -73,6 +80,8 @@ def create_customer_nodes_in_knowledge_graph_helper(customer_id:str):
 
     # Extract valid JSON objects
     matches = pattern.findall(response)
+    print(response)
+    print(matches)
 
     # Convert extracted matches into proper JSON format
     steps= []
@@ -80,11 +89,14 @@ def create_customer_nodes_in_knowledge_graph_helper(customer_id:str):
         try:
             # Stripping unnecessary newlines or spaces
             cleaned_match = match.strip()
+
             steps.append(json.loads(cleaned_match))
         except json.JSONDecodeError as e:
             print(f"JSON Decode Error: {e}\nProblematic JSON:\n{cleaned_match}")
 
     for step in steps:
+        print(steps)
+
         if "parameters" in step.keys():
         
             # get the parameters
@@ -107,3 +119,19 @@ def create_customer_nodes_in_knowledge_graph_helper(customer_id:str):
             function_name = step["action"]
             result = invoke(function_name)
             logging.info(f"Result from invoking {function_name} without parameters: {result}")
+        
+        # Function to delete orphan nodes
+def delete_orphan_nodes():
+    try:
+        # Run the query to match nodes with no relationships
+        query = """
+        MATCH (n)
+        WHERE NOT (n)-[]-()
+        DELETE n
+        """
+        # Execute the query via the Neo4j connection
+        db.cypher_query(query, {})
+        print("Orphan nodes deleted successfully.")
+    except Exception as e:
+        print(f"Error occurred: {e}")
+

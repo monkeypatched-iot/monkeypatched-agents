@@ -1,0 +1,28 @@
+from neomodel import StructuredNode, StringProperty, FloatProperty, RequiredProperty
+
+class CustomerOrderMetrics(StructuredNode):
+    # Required properties
+    customer_id = StringProperty(unique_index=True)
+    profit_per_order = FloatProperty(required=True)
+    revenue_per_order = FloatProperty(required=True)
+    cost_to_serve_per_order = FloatProperty(required=True)
+    customer_lifetime_value = FloatProperty(required=True)
+    return_on_fulfillment_cost = FloatProperty(required=True)
+    gross_profit_margin = FloatProperty(required=True)
+    inventory_turnover_ratio = FloatProperty(required=True)
+    order_profitability_index = FloatProperty(required=True)
+    average_order_value = FloatProperty(required=True)
+    customer_retention_rate = FloatProperty(required=True)
+    order_fill_rate = FloatProperty(required=True)
+    on_time_delivery_rate = FloatProperty(required=True)
+    order_cycle_time = FloatProperty(required=True)
+    late_order_rate = FloatProperty(required=True)
+    perfect_order_rate = FloatProperty(required=True)
+    return_rate = FloatProperty(required=True)
+    backorder_rate = FloatProperty(required=True)
+    order_accuracy_rate = FloatProperty(required=True)
+    first_time_fill_rate = FloatProperty(required=True)
+    customer_satisfaction_score = FloatProperty(required=True)
+    order_margin_per_unit = FloatProperty(required=True)
+    cost_of_goods_sold = FloatProperty(required=True)
+    order_processing_time = FloatProperty(required=True)
