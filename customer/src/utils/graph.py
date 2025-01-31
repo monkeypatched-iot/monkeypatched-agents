@@ -1,11 +1,15 @@
 # Define connection details
 from src.tools.neo4j import Neo4jGraphDB
+from dotenv import load_dotenv
+import os
 
 
-URI = "neo4j://localhost:7687"  # Change to your Neo4j instance URI
-USERNAME = "neo4j"             # Replace with your username
-PASSWORD = "neo4jpassword"     # Replace with your password
+load_dotenv()  # Load variables from .env
+
+NEO4J_URI = os.getenv("NEO4J_URI")
+NEO4J_USERNAME = os.getenv("NEO4J_USERNAME")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
+
 
 # Create an instance of the connection
-connection = Neo4jGraphDB(URI, USERNAME, PASSWORD)
-
+connection = Neo4jGraphDB(NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD)
