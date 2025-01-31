@@ -16,4 +16,5 @@ def create_customer_nodes_in_knowledge_graph(customer_id: str):
         except Exception as e:
             print('failed to delete orphan nodes')
             raise HTTPException(status_code=500, detail=f"Error occurred: {e}")
-        raise HTTPException(status_code=500, detail=f"Error occurred: {e}")
+        
+# todo check  updates to existing customers
