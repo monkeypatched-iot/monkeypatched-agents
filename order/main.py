@@ -60,7 +60,7 @@ model = OllamaLLM(model="deepseek-r1:1.5b",temperature=0.0)
 
 chain = LLMChain(prompt=prompt_template, llm=model)
 #pass all params hereS
-parameters_json = json.dumps({"order_id": "ORD12345"})
+parameters_json = json.dumps({"order_id": "ORD123456"})
 
 query = {"parameters": parameters_json}
 
