@@ -50,16 +50,16 @@ class Neo4jGraphDB:
                 for key, value in node.__dict__.items():
                     setattr(existing_node, key, value)
                 existing_node.save()  # Save updated node
-                logger.info(f"Node with {node.customer_id} updated.")
+                logger.info(f"Node with {node} updated.")
                 return existing_node
             else:
                 # If node does not exist, create it
                 node.save()  # Create new node
-                logger.info(f"Node with {node.customer_id} created.")
+                logger.info(f"Node with {node} created.")
                 return node
 
         except RuntimeError as e:
-            logger.error(f"Error adding data to node: {node.customer_id}")
+            logger.error(f"Error adding data to node: {node}")
             logger.error(e)
             return None
 
@@ -67,7 +67,7 @@ class Neo4jGraphDB:
         ''' Helper function to check if the node already exists based on unique identifier '''
         try:
             # Replace customer_id with the actual unique identifier for your use case
-            return node.__class__.nodes.get(customer_id=node.customer_id)
+            return node.__class__.nodes.get(product_id=node.product_id)
         except node.__class__.DoesNotExist:
             return None
 

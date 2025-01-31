@@ -1,21 +1,16 @@
 from fastapi import FastAPI
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama.llms import OllamaLLM
-from langchain.prompts import ChatPromptTemplate
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
-from pydantic import BaseModel
 import re
 import json
 import logging
 from src.utils.invoker import invoke
-from neomodel import StructuredNode, StringProperty, RelationshipTo, RelationshipFrom, db
+from neomodel import db
 
 logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
-
-
 
 # @app.get("/v1/customer/metadata/{customer_id}")
 def create_customer_nodes_in_knowledge_graph_helper(customer_id:str):
@@ -80,8 +75,6 @@ def create_customer_nodes_in_knowledge_graph_helper(customer_id:str):
 
     # Extract valid JSON objects
     matches = pattern.findall(response)
-    print(response)
-    print(matches)
 
     # Convert extracted matches into proper JSON format
     steps= []
@@ -95,7 +88,6 @@ def create_customer_nodes_in_knowledge_graph_helper(customer_id:str):
             print(f"JSON Decode Error: {e}\nProblematic JSON:\n{cleaned_match}")
 
     for step in steps:
-        print(steps)
 
         if "parameters" in step.keys():
         

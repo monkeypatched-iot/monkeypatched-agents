@@ -2,14 +2,24 @@ from src.dao.metadata import CustomerMetadata
 from src.dao.metrics import CustomerOrderMetrics
 from src.dao.payment import CustomerPaymentData
 from src.tools.requests import get
+from src.tools.kafka import publish_event
 from src.utils.graph import connection
 from src.dao.details import CustomerDetails
 import json
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # Load variables from .env
+
+BASE_URL = os.getenv("API_BASE_URL")
 
 Customer = connection.create_node(CustomerDetails)
 Metadata = connection.create_node(CustomerMetadata)
 Metrics = connection.create_node(CustomerOrderMetrics)
 Payments = connection.create_node(CustomerPaymentData)
+
+customer_aggregate = {}
 
 def GetCustomerDetails(customer_id):
     if customer_id != "customer_id":
@@ -17,9 +27,8 @@ def GetCustomerDetails(customer_id):
         print("Received keyword arguments:", customer_id)
 
         try:
-            response = get(f"http://localhost:8000/v1/customer/details/{customer_id}")
-            response.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
-
+            response = get(f"{BASE_URL}/v1/customer/details/{customer_id}")
+            
             # Step 1: Decode binary to string
             json_string = response.content.decode("utf-8")
 
@@ -29,8 +38,10 @@ def GetCustomerDetails(customer_id):
             print(customer_dict)
 
             # save data to the node 
-        
-            customer = connection.add(Customer(**customer_dict))
+            customer_aggregate["details"] = customer_dict
+            connection.add(Customer(**customer_dict))
+
+            return customer_dict
 
         except Exception as e:
             print(f"Error while fetching customer details: {e}")
@@ -42,7 +53,7 @@ def GetCustomerMetadata(customer_id):
         print("Received keyword arguments:", customer_id)
         
         try:
-            response = get(f"http://localhost:8000/v1/customer/metadata/{customer_id}")
+            response = get(f"{BASE_URL}/v1/customer/metadata/{customer_id}")
             response.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
             
             # Step 1: Decode binary to string
@@ -52,9 +63,12 @@ def GetCustomerMetadata(customer_id):
             customer_metadata_dict = json.loads(json_string)
 
             print(customer_metadata_dict)
+            customer_aggregate["metadata"] = customer_metadata_dict
 
             # save data to the node 
-            metadata = connection.add(Metadata(**customer_metadata_dict))
+            connection.add(Metadata(**customer_metadata_dict))
+
+            print(customer_metadata_dict)
 
             
         except Exception as e:
@@ -67,7 +81,7 @@ def GetCustomerMetrics(customer_id):
         print("Received keyword arguments:", customer_id)
         
         try:
-            response = get(f"http://localhost:8000/v1/customer/metrics/{customer_id}")
+            response = get(f"{BASE_URL}/v1/customer/metrics/{customer_id}")
             response.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
             
             # Step 1: Decode binary to string
@@ -78,8 +92,9 @@ def GetCustomerMetrics(customer_id):
 
             print(customer_metric_dict)
 
+            customer_aggregate["metrics"] = customer_metric_dict
             # save data to the node 
-            metric = connection.add(Metrics(**customer_metric_dict))
+            connection.add(Metrics(**customer_metric_dict))
 
         except Exception as e:
             print(f"Error while fetching customer retention metrics: {e}")
@@ -91,7 +106,7 @@ def GetCustomerPaymentInformation(customer_id):
         print("Received keyword arguments:", customer_id)
         
         try:
-            response = get(f"http://localhost:8000/v1/customer/payment-data/{customer_id}")
+            response = get(f"{BASE_URL}/v1/customer/payment-data/{customer_id}")
             response.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
 
             # todo: use this data to create a customer-payment node in neo4j
@@ -105,7 +120,10 @@ def GetCustomerPaymentInformation(customer_id):
             print(customer_payment_info_dict)
 
             # save data to the node 
-            payment_info = connection.add(Payments(**customer_payment_info_dict))
+            customer_aggregate["payment_info"] = customer_payment_info_dict
+            connection.add(Payments(**customer_payment_info_dict))
+
+            return customer_payment_info_dict
 
         except Exception as e:
             print(f"Error while fetching customer payments: {e}")
@@ -182,21 +200,48 @@ def GetCustomerPaymentInfoFromGraph(customer_id):
             print(f"Error fetching customer payment: {e}")
             return None
 
+def publish_customer():
+    try:
+        # Ensure it's a dictionary before converting it to JSON
+        if not isinstance(customer_aggregate, dict):
+            raise ValueError("customer_aggregate must be a dictionary")
+
+        # Convert to JSON string before sending
+        customer_json ={"customer": customer_aggregate}
+
+        # Publish event to Kafka
+        publish_event("customer",customer_json)
+
+        print("Customer data published successfully.")
+
+    except Exception as e:
+        print(f"Error publishing customer data: {e}")
+
 def AddCustomer(customer_id):
     if customer_id != "customer_id":
         print("adding a new customer")
+        publish_customer()
 
         # Retrieve existing customer details, metadata, metrics, and payment information
         customer = GetCustomerDetailsFromGraph(customer_id)
         metadata = GetCustomerMetadataFromGraph(customer_id)
         metrics = GetCustomerMetricsFromGraph(customer_id)
         payments = GetCustomerPaymentInfoFromGraph(customer_id)
+ 
+        # retry  if not exists 
+        if not customer:  
+            customer = GetCustomerDetails(customer_id)
 
-        # Add customer only if they don't already exist
-        if not customer:  # If customer doesn't exist, proceed to create and link
-            customer_dict = GetCustomerDetails(customer_id)
-            customer = connection.add(CustomerDetails(**customer_dict))
+        if not payments:
+            payments = GetCustomerPaymentInformation(customer_id)
 
+        if not metadata:
+            metadata = GetCustomerMetadata(customer_id)
+        
+        if not payments:
+            payments = GetCustomerPaymentInformation(customer_id)
+
+        # add to customer 
         if metadata:
             customer.metadata.connect(metadata)
         if metrics:
@@ -204,13 +249,8 @@ def AddCustomer(customer_id):
         if payments:
             customer.payment.connect(payments)
 
-        print(f"Customer {customer_id} added successfully.")
-        
-        
+        print(f"Customer {customer_id} added successfully.") 
+ 
+        return json.dumps({"error": "No customer payment data found"})
     
-
-
-
-
-
-# todo: create an aggregate object and save it to vector db
+ 
