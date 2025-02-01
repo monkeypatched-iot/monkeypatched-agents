@@ -1,4 +1,4 @@
-from neomodel import StructuredNode, StringProperty, DateTimeProperty
+from neomodel import StructuredNode, StringProperty
 
 class ComponentMetadata(StructuredNode):
     part_id = StringProperty(required=True)
@@ -7,5 +7,5 @@ class ComponentMetadata(StructuredNode):
     material_origin = StringProperty(required=True)
     environmental_rating = StringProperty(required=True)
     warranty_terms = StringProperty(required=True)
-    last_updated = DateTimeProperty(required=True)
+    last_updated = StringProperty(required=True)
     remarks = StringProperty(required=True)

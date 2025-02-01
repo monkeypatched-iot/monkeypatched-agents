@@ -42,7 +42,7 @@ class Neo4jGraphDB:
     def add(self, node: StructuredNode):
         ''' Add data to a particular node, create if not exists, update if exists '''
         try:
-            # Check if node with the same unique identifier (e.g., customer_id) exists
+            # Check if node with the same unique identifier (e.g., part_id) exists
             existing_node = self._get_existing_node(node)
             
             if existing_node:
@@ -50,24 +50,24 @@ class Neo4jGraphDB:
                 for key, value in node.__dict__.items():
                     setattr(existing_node, key, value)
                 existing_node.save()  # Save updated node
-                logger.info(f"Node with {node.customer_id} updated.")
+                logger.info(f"Node with {node.part_id} updated.")
                 return existing_node
             else:
                 # If node does not exist, create it
                 node.save()  # Create new node
-                logger.info(f"Node with {node.customer_id} created.")
+                logger.info(f"Node with {node.part_id} created.")
                 return node
 
         except RuntimeError as e:
-            logger.error(f"Error adding data to node: {node.customer_id}")
+            logger.error(f"Error adding data to node: {node.part_id}")
             logger.error(e)
             return None
 
     def _get_existing_node(self, node: StructuredNode):
         ''' Helper function to check if the node already exists based on unique identifier '''
         try:
-            # Replace customer_id with the actual unique identifier for your use case
-            return node.__class__.nodes.get(customer_id=node.customer_id)
+            # Replace part_id with the actual unique identifier for your use case
+            return node.__class__.nodes.get(part_id=node.part_id)
         except node.__class__.DoesNotExist:
             return None
 

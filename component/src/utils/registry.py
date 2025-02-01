@@ -1,10 +1,10 @@
-from src.functions.functions import AddComponent, GetComponentDetails, GetComponentMetadata, GetComponentMetrics, GetComponentPaymentInformation
+from src.functions.functions import AddComponent, GetComponentDetails, GetComponentInventory, GetComponentMetadata, GetComponentPaymentInformation
 
 
 function_registry = {
     "GetComponentDetails":GetComponentDetails,
     "GetComponentMetadata":GetComponentMetadata,
-    "GetComponentMetrics":GetComponentMetrics,
+    "GetComponentInventory":GetComponentInventory,
     "GetComponentPaymentInformation":GetComponentPaymentInformation,
     "AddComponent":AddComponent
 }

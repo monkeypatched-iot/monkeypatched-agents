@@ -1,6 +1,6 @@
 from neomodel import StructuredNode, StringProperty, IntegerProperty, FloatProperty, BooleanProperty
 
-class ComponentInventoryModel(StructuredNode):
+class ComponentInventory(StructuredNode):
     part_id = StringProperty(required=True)
     available_stock = IntegerProperty(required=True)
     reorder_level = IntegerProperty(required=True)

@@ -23,9 +23,9 @@ prompt_template = PromptTemplate(input_variables=["parameters"], template="""
     - **Step:** 2  
     - **Action:** GetComponentMetadata (parameters: {parameters})
 
-    3️. Retrieve Component Retention & Satisfaction Metrics  
+    3️. Retrieve Component Inventory  
     - **Step:** 3  
-    - **Action:** GetComponentMetrics (parameters: {parameters})
+    - **Action:** GetComponentInventory (parameters: {parameters})
 
     4️. Retrieve Component Payment Information  
     - **Step:** 4  
@@ -49,7 +49,7 @@ prompt_template = PromptTemplate(input_variables=["parameters"], template="""
     - Maintain the given response structure for consistency.  
     - Execute the steps sequentially.
     - Always return the same response
-    - make first letter of function name uppercase and remove any spaces before it
+    - do not change the action names
                                                                                 
     """)
 
@@ -57,7 +57,7 @@ model = OllamaLLM(model="deepseek-r1:1.5b",temperature=0.0)
 
 chain = LLMChain(prompt=prompt_template, llm=model)
 #pass all params hereS
-parameters_json = json.dumps({"component_id": "COMP12345"})
+parameters_json = json.dumps({"component_id": "P12345"})
 
 query = {"parameters": parameters_json}
 
@@ -84,7 +84,8 @@ for match in matches:
         print(f"JSON Decode Error: {e}\nProblematic JSON:\n{cleaned_match}")
 
 for step in steps:
-    if "parameters" in step.keys():
+    print(step.keys())
+    if "parameters" in step.keys() and "component_id" not in step.keys():
         
             # get the parameters
             arguments = step["parameters"]
@@ -103,6 +104,4 @@ for step in steps:
                     
     else:
             # Call function without parameters
-            function_name = step["action"]
-            result = invoke(function_name)
-            logging.info(f"Result from invoking {function_name} without parameters: {result}")
+             print("Action key is missing!")

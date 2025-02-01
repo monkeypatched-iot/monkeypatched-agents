@@ -1,4 +1,8 @@
 from neomodel import StructuredNode, StringProperty, FloatProperty, BooleanProperty
+from src.dao.metadata import ComponentMetadata
+from src.dao.inventory import ComponentInventory
+from src.dao.pricing import ComponentPricing
+from src.utils.graph import connection
 
 class ComponentDetails(StructuredNode):
     part_id = StringProperty(required=True)
@@ -19,3 +23,7 @@ class ComponentDetails(StructuredNode):
     part_testing_results = StringProperty(required=True)
     part_warranty = StringProperty(required=True)
     part_customization = BooleanProperty(required=True)
+
+    metadata = connection.create_relationship_to('ComponentMetadata','HAS_A')
+    inventory =  connection.create_relationship_to('ComponentInventory','HAS_A')
+    pricing =  connection.create_relationship_to('ComponentPricing','HAS_A')

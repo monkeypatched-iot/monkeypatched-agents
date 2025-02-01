@@ -1,6 +1,6 @@
 from neomodel import StructuredNode, StringProperty, FloatProperty
 
-class ComponentPricingDetails(StructuredNode):
+class ComponentPricing(StructuredNode):
     part_id = StringProperty(required=True)
     unit_price = FloatProperty(required=True)
     total_price = FloatProperty(required=True)
