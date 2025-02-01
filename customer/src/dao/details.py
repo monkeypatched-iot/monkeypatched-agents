@@ -1,5 +1,8 @@
 from neomodel import StructuredNode, StringProperty, EmailProperty, UniqueIdProperty
 from src.utils.graph import connection
+from src.dao.metadata import CustomerMetadata
+from src.dao.metrics import CustomerOrderMetrics
+from src.dao.payment import CustomerPaymentData
 
 # CustomerDetails Model using neomodel
 class CustomerDetails(StructuredNode):

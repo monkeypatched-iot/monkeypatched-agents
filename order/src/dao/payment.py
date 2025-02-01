@@ -1,12 +1,12 @@
-from neomodel import StructuredNode, StringProperty, FloatProperty, BooleanProperty, DateTimeProperty, IntegerProperty
+from neomodel import StructuredNode, StringProperty, FloatProperty, BooleanProperty, IntegerProperty
 
-class OrderPaymentMetadata(StructuredNode):
+class OrderPayment(StructuredNode):
     order_id = StringProperty(required=True)
     order_payment_status = StringProperty(required=True)
     payment_method = StringProperty(required=True)
     payment_terms = StringProperty(required=True)
-    order_payment_due_date = DateTimeProperty(required=True)
-    payment_received_date = DateTimeProperty(required=True)
+    order_payment_due_date = StringProperty(required=True)
+    payment_received_date = StringProperty(required=True)
     payment_amount = FloatProperty(required=True)
     outstanding_payment_amount = FloatProperty(required=True)
     payment_overdue_amount = FloatProperty(required=True)

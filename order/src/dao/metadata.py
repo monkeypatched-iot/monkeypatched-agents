@@ -1,19 +1,14 @@
-from neomodel import StructuredNode, StringProperty, FloatProperty, BooleanProperty, DateTimeProperty, Optional
-from datetime import datetime, timezone
-
-def datetime_now():
-    return datetime.now(timezone.utc)
+from neomodel import StructuredNode, StringProperty, FloatProperty, BooleanProperty
 
 class OrderMetadata(StructuredNode):
     order_id = StringProperty(required=True, unique=True)
-    customer_id = StringProperty(required=True)
     customer_segment = StringProperty(default=None)
     sales_region = StringProperty(default=None)
     salesperson = StringProperty(default=None)
     sales_channel = StringProperty(default=None)
-    customs_declaration_id = StringProperty(required=True)
+    customs_declaration_id = StringProperty()
     
-    total_sales_value = FloatProperty(required=True, gt=0)
+    total_sales_value = FloatProperty(gt=0)
     discount_applied = FloatProperty(default=0.0, ge=0)
     net_sales_value = FloatProperty(required=True, gt=0)
     tax_amount = FloatProperty(default=0.0, ge=0)

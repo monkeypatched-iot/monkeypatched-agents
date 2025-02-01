@@ -1,11 +1,11 @@
-from neomodel import StructuredNode, StringProperty, DateTimeProperty, FloatProperty
+from neomodel import StructuredNode, StringProperty,  FloatProperty
 
-class ShippingInformation(StructuredNode):
+class OrderShipping(StructuredNode):
     order_id = StringProperty(required=True)
     shipping_id = StringProperty(required=True)
     shipping_address = StringProperty(required=True)
-    shipping_date = DateTimeProperty(required=True)
-    expected_delivery_date = DateTimeProperty(required=True)
+    shipping_date = StringProperty(required=True)
+    expected_delivery_date = StringProperty(required=True)
     shipping_method = StringProperty(required=True)
     tracking_number = StringProperty(required=True)
     carrier_name = StringProperty(required=True)
