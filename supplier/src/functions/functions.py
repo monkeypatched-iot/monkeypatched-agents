@@ -1,4 +1,5 @@
 import json
+from src.tools.kafka import publish_event
 from src.dao.shipping import SupplierShipping
 from src.dao.quality import SupplierQuality
 from src.dao.inventory import SupplierInventory
@@ -352,10 +353,32 @@ def GetSupplierShippingFromGraph(supplier_id):
 
     return None
 
+
+
+def publish_supplier(supplier_aggregate: dict) -> None:
+    """Publishes supplier data to Kafka."""
+    try:
+        if not isinstance(supplier_aggregate, dict):
+            raise ValueError("supplier_aggregate must be a dictionary")
+
+        # Ensure the supplier data is serializable
+        supplier_json = {"supplier": supplier_aggregate}
+        json.dumps(supplier_json)  # Validate serialization
+
+        # Publish event to Kafka
+        publish_event("supplier", supplier_json)
+
+        print("Supplier data published successfully.")
+
+    except (ValueError, TypeError, json.JSONDecodeError) as e:
+        logging.error(f"Error publishing supplier data: {e}")
+        raise  # Re-raise the error for better debugging
+
 def AddSupplier(supplier_id,item_id,location_id):
     if supplier_id != "supplier_id":
         print("adding the supplier id")
         print({"supplier":supplier_aggregate})
+        publish_supplier(supplier_aggregate)
 
         try:
             # Retrieve supplier details
@@ -397,5 +420,3 @@ def AddSupplier(supplier_id,item_id,location_id):
         except Exception as e:
             logging.error(f"Error adding supplier {supplier_id}: {e}", exc_info=True)
             return json.dumps({"error": f"Unexpected error: {str(e)}"})
-
-

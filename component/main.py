@@ -105,3 +105,5 @@ for step in steps:
     else:
             # Call function without parameters
              print("Action key is missing!")
+
+# todo: must be exposed as API
