@@ -1,11 +1,19 @@
 import json
-from monkeypatched_agents.builder.src.tools.kafka import publish_event
+import os
+
+from dotenv import load_dotenv
+from src.tools.kafka import publish_event
+from src.tools.requests import get
 from src.dao.suppliers.details import SupplierDetails
 from src.dao.components.details import ComponentDetails
 from src.dao.products.details import ProductDetails
 from src.dao.orders.details import OrderDetails
 from src.dao.customers.details import CustomerDetails
 
+
+load_dotenv()  # Load variables from .env
+
+BASE_URL = os.getenv("API_BASE_URL")
 
 def GetOrderDetailsFromGraph(order_id):
     """Fetch order details from the knowledge graph."""
@@ -104,88 +112,106 @@ def GetSupplierDetailsFromGraph(supplier_id):
 
 def ConnectCustomertoOrder(customer_id, order_id, products):
     """Connect a customer to an order."""
-    if not customer_id or not order_id:
-        print("Invalid customer_id or order_id")
-        return
+    if customer_id != "customer_id":
+        if not customer_id or not order_id:
+            print("Invalid customer_id or order_id")
+            return
 
-    print("Connecting the customer to order...")
-    order = GetOrderDetailsFromGraph(order_id)
-    customer = GetCustomerDetailsFromGraph(customer_id)
+        print("Connecting the customer to order...")
+        order = GetOrderDetailsFromGraph(order_id)
+        customer = GetCustomerDetailsFromGraph(customer_id)
 
-    if order and customer:
-        customer.order.connect(order)
-        print(f"Customer {customer_id} connected to order {order_id}")
-    else:
-        print("Failed to connect customer to order.")
+        if order and customer:
+            customer.order.connect(order)
+            print(f"Customer {customer_id} connected to order {order_id}")
+        else:
+            print("Failed to connect customer to order.")
 
 
 def ConnectOrderToProduct(customer_id, order_id, products):
     """Connect an order to products."""
-    if not order_id or not products:
-        print("Invalid order_id or products")
-        return
 
-    print("Connecting order to products...")
-    order = GetOrderDetailsFromGraph(order_id)
+    if customer_id != "customer_id":
+        if not order_id or not products:
+            print("Invalid order_id or products")
+            return
 
-    if order:
-        for product in products:
-            product_id = product["id"]
-            product_obj = GetProductDetailsFromGraph(product_id)
-            if product_obj:
-                order.product.connect(product_obj)
-                print(f"Product {product_id} connected to order {order_id}")
-    else:
-        print("Failed to connect order to products.")
+        print("Connecting order to products...")
+        order = GetOrderDetailsFromGraph(order_id)
+
+        if order:
+            for product in products:
+                product_id = product["id"]
+                product_obj = GetProductDetailsFromGraph(product_id)
+                if product_obj:
+                    order.product.connect(product_obj)
+                    print(f"Product {product_id} connected to order {order_id}")
+        else:
+            print("Failed to connect order to products.")
 
 
 def ConnectComponentToProduct(customer_id, order_id, products):
     """Connect components to products."""
-    if not products:
-        print("Invalid products")
-        return
+    if customer_id != "customer_id":
 
-    print("Connecting components to products...")
-    for product in products:
-        product_id = product["id"]
-        product_obj = GetProductDetailsFromGraph(product_id)
+        if not products:
+            print("Invalid products")
+            return
 
-        if product_obj:
-            # TODO: Replace with actual API call to BOM service
-            response = {"product_id": product_id, "components": [{"component_id": "P12345"}]}
-            components = response["components"]
+        print("Connecting components to products...")
+        for product in products:
+            product_id = product["id"]
+            product_obj = GetProductDetailsFromGraph(product_id)
 
-            for component in components:
-                part = GetComponentDetailsFromGraph(component["component_id"])
-                if part:
-                    product_obj.part.connect(part)
-                    print(f"Component {component['component_id']} connected to product {product_id}")
+            if product_obj:
+                # TODO: Replace with actual API call to BOM service
+                response = {"product_id": product_id, "components": [{"component_id": "P12345"}]}
+                components = response["components"]
+
+                for component in components:
+                    part = GetComponentDetailsFromGraph(component["component_id"])
+                    if part:
+                        product_obj.part.connect(part)
+                        print(f"Component {component['component_id']} connected to product {product_id}")
 
 
 def ConnectComponentsToSuppliers(customer_id, order_id, products):
     """Connect components to suppliers."""
-    if not products:
-        print("Invalid products")
-        return
+    if customer_id != "customer_id":
 
-    print("Connecting components to suppliers...")
-    for product in products:
-        # TODO: Replace with actual API call to BOM service
-        response = {"product_id": product["id"], "components": [{"component_id": "P12345"}]}
-        components = response["components"]
+        if not products:
+            print("Invalid products")
+            return
 
-        for component in components:
-            part = GetComponentDetailsFromGraph(component["component_id"])
-            if part:
-                # TODO: Replace with actual API call to supplier service
-                response = {"component_id": component["component_id"], "suppliers": [{"supplier_id": "S12345"}]}
-                suppliers = response["suppliers"]
+        for product in products:
+            product_id = product["id"]
 
-                for supplier in suppliers:
-                    current_supplier = GetSupplierDetailsFromGraph(supplier["supplier_id"])
-                    if current_supplier:
-                        part.supplier.connect(current_supplier)
-                        print(f"Component {component['component_id']} connected to supplier {supplier['supplier_id']}")
+            response = get(f"{BASE_URL}/v1/bill-of-materials/{product_id}")
+
+            json_string = response.content.decode("utf-8")
+
+            component_dict = json.loads(json_string)
+
+            components = component_dict["components"]
+
+            for component in components:
+                part = GetComponentDetailsFromGraph(component["component_id"])
+                if part:
+                    component_id = component["component_id"]
+
+                    response = get(f"{BASE_URL}/v1/component-suppliers/{component_id}")
+
+                    json_string = response.content.decode("utf-8")
+
+                    supplier_dict = json.loads(json_string)
+                        
+                    suppliers = supplier_dict["suppliers"]
+
+                    for supplier in suppliers:
+                        current_supplier = GetSupplierDetailsFromGraph(supplier["supplier_id"])
+                        if current_supplier:
+                            part.supplier.connect(current_supplier)
+                            print(f"Component {component['component_id']} connected to supplier {supplier['supplier_id']}")
 
 
 def Notify(customer_id, order_id, products):

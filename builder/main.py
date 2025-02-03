@@ -1,7 +1,7 @@
 import logging
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from monkeypatched_agents.builder.src.vo.graph import KnowledgeGraphRequest
+from src.vo.graph import KnowledgeGraphRequest
 from src.api.steps import create_knowledge_graph_helper, delete_orphan_nodes
 
 app = FastAPI()
