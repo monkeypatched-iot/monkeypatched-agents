@@ -1,82 +1,94 @@
-
+import json
+from monkeypatched_agents.builder.src.tools.kafka import publish_event
 from src.dao.suppliers.details import SupplierDetails
 from src.dao.components.details import ComponentDetails
 from src.dao.products.details import ProductDetails
 from src.dao.orders.details import OrderDetails
 from src.dao.customers.details import CustomerDetails
 
+
 def GetOrderDetailsFromGraph(order_id):
-    if order_id != "order_id":
-        print('Getting order details for ID:', order_id)
+    """Fetch order details from the knowledge graph."""
+    if not order_id:
+        print("Invalid order_id provided")
+        return None
 
-        try:
-            # Check if the order exists
-            order = OrderDetails.nodes.get_or_none(order_id=order_id)
-            if order:
-                print(f"Order found: {order}")
-                return order
-            else:
-                print(f"No order found with order_id: {order_id}")
-                return None  # Return None if no order found
+    print(f"Getting order details for ID: {order_id}")
+    try:
+        order = OrderDetails.nodes.get_or_none(order_id=order_id)
+        if order:
+            print(f"Order found: {order}")
+            return order
+        print(f"No order found with order_id: {order_id}")
+    except Exception as e:
+        print(f"Error fetching order details: {e}", exc_info=True)
 
-        except Exception as e:
-            print(f"Error fetching order details: {e}")
-            return None
-
-def GetCustomerDetailsFromGraph(customer_id):
-    if customer_id != "customer_id":
-        print('Getting customer details for ID:', customer_id)
-
-        try:
-            # Check if the customer exists
-            customer = CustomerDetails.nodes.get_or_none(customer_id=customer_id)
-            if customer:
-                print(f"Customer found: {customer}")
-                return customer
-            else:
-                print(f"No customer found with customer_id: {customer_id}")
-                return None  # Return None if no customer found
-
-        except Exception as e:
-            print(f"Error fetching customer details: {e}")
-            return None
-
-def GetProductDetailsFromGraph(product_id):
-    if product_id != "product_id":
-        print('Getting product details for ID:', product_id)
-
-        try:
-            # Check if the product exists
-            product = ProductDetails.nodes.get_or_none(product_id=product_id)
-            if product:
-                print(f"Product found: {product}")
-                return product
-            else:
-                print(f"No product found with product_id: {product_id}")
-                return None  # Return None if no product found
-
-        except Exception as e:
-            print(f"Error fetching product details: {e}")
-            return None
-
-def GetComponentDetailsFromGraph(component_id):
-    if component_id != "component_id":
-        print('Getting component details for ID:', component_id)
-        try:
-            component = ComponentDetails.nodes.get_or_none(part_id=component_id)
-            if component:
-                print(f"Component found: {component}")
-                return component
-            print(f"No component found with component_id: {component_id}")
-        except Exception as e:
-            print(f"Error fetching component details: {e}")
     return None
 
+
+def GetCustomerDetailsFromGraph(customer_id):
+    """Fetch customer details from the knowledge graph."""
+    if not customer_id:
+        print("Invalid customer_id provided")
+        return None
+
+    print(f"Getting customer details for ID: {customer_id}")
+    try:
+        customer = CustomerDetails.nodes.get_or_none(customer_id=customer_id)
+        if customer:
+            print(f"Customer found: {customer}")
+            return customer
+        print(f"No customer found with customer_id: {customer_id}")
+    except Exception as e:
+        print(f"Error fetching customer details: {e}", exc_info=True)
+
+    return None
+
+
+def GetProductDetailsFromGraph(product_id):
+    """Fetch product details from the knowledge graph."""
+    if not product_id:
+        print("Invalid product_id provided")
+        return None
+
+    print(f"Getting product details for ID: {product_id}")
+    try:
+        product = ProductDetails.nodes.get_or_none(product_id=product_id)
+        if product:
+            print(f"Product found: {product}")
+            return product
+        print(f"No product found with product_id: {product_id}")
+    except Exception as e:
+        print(f"Error fetching product details: {e}", exc_info=True)
+
+    return None
+
+
+def GetComponentDetailsFromGraph(component_id):
+    """Fetch component details from the knowledge graph."""
+    if not component_id:
+        print("Invalid component_id provided")
+        return None
+
+    print(f"Getting component details for ID: {component_id}")
+    try:
+        component = ComponentDetails.nodes.get_or_none(part_id=component_id)
+        if component:
+            print(f"Component found: {component}")
+            return component
+        print(f"No component found with component_id: {component_id}")
+    except Exception as e:
+        print(f"Error fetching component details: {e}", exc_info=True)
+
+    return None
+
+
 def GetSupplierDetailsFromGraph(supplier_id):
-    if not supplier_id:  # Handles None, empty strings
+    """Fetch supplier details from the knowledge graph."""
+    if not supplier_id:
         print("Invalid supplier_id provided")
         return None
-    
+
     print(f"Fetching supplier details for ID: {supplier_id}")
     try:
         supplier_details = SupplierDetails.nodes.get_or_none(supplier_id=supplier_id)
@@ -90,55 +102,98 @@ def GetSupplierDetailsFromGraph(supplier_id):
     return None
 
 
-def ConnectCustomertoOrder(customer_id,order_id,products):
-    if customer_id != "customer_id":
-        print("connecting the customer to order")
-        order = GetOrderDetailsFromGraph(order_id)
-        customer =  GetCustomerDetailsFromGraph(customer_id)
-        customer.order.connect(order)
+def ConnectCustomertoOrder(customer_id, order_id, products):
+    """Connect a customer to an order."""
+    if not customer_id or not order_id:
+        print("Invalid customer_id or order_id")
+        return
 
-def ConnectOrderToProduct(customer_id,order_id,products):
-    print("connect the order to the products")
-    if customer_id != "customer_id":
-        order = GetOrderDetailsFromGraph(order_id)
+    print("Connecting the customer to order...")
+    order = GetOrderDetailsFromGraph(order_id)
+    customer = GetCustomerDetailsFromGraph(customer_id)
+
+    if order and customer:
+        customer.order.connect(order)
+        print(f"Customer {customer_id} connected to order {order_id}")
+    else:
+        print("Failed to connect customer to order.")
+
+
+def ConnectOrderToProduct(customer_id, order_id, products):
+    """Connect an order to products."""
+    if not order_id or not products:
+        print("Invalid order_id or products")
+        return
+
+    print("Connecting order to products...")
+    order = GetOrderDetailsFromGraph(order_id)
+
+    if order:
         for product in products:
             product_id = product["id"]
-            product = GetProductDetailsFromGraph(product_id)
-            order.product.connect(product)
+            product_obj = GetProductDetailsFromGraph(product_id)
+            if product_obj:
+                order.product.connect(product_obj)
+                print(f"Product {product_id} connected to order {order_id}")
+    else:
+        print("Failed to connect order to products.")
 
 
-def ConnectComponentToProduct(customer_id,order_id,products):
-    if customer_id != "customer_id":
-        print("connect the compponent to the product")
-        for product in products:
-                product_id = product["id"]
-                product = GetProductDetailsFromGraph(product_id)
-                # todo: get the components for the producct from the bom service
-                response = {"product_id":"PRD12345","components":[{"component_id":"P12345"}]}
-                components = response["components"]
-                for component in components:
-                    part = GetComponentDetailsFromGraph(component["component_id"])
-                    product.part.connect(part)
+def ConnectComponentToProduct(customer_id, order_id, products):
+    """Connect components to products."""
+    if not products:
+        print("Invalid products")
+        return
 
-def ConnectComponentsToSuppliers(customer_id,order_id,products):
-      if customer_id != "customer_id":
-        print("connect the compponent to the product")
-        for product in products:
-                # todo: get the components for the producct from the bom service
-                response = {"product_id":"PRD12345","components":[{"component_id":"P12345"}]}
-                components = response["components"]
-                for component in components:
-                    part = GetComponentDetailsFromGraph(component["component_id"])
-                    # todo: get the supplier for the components
-                    response = {"component_id":"PRD12345","suppliers":[{"supplier_id":"S12345"}]}
-                    suppliers = response["suppliers"]
-                    for supplier in suppliers:
-                        current_supplier = GetSupplierDetailsFromGraph(supplier["supplier_id"])
+    print("Connecting components to products...")
+    for product in products:
+        product_id = product["id"]
+        product_obj = GetProductDetailsFromGraph(product_id)
+
+        if product_obj:
+            # TODO: Replace with actual API call to BOM service
+            response = {"product_id": product_id, "components": [{"component_id": "P12345"}]}
+            components = response["components"]
+
+            for component in components:
+                part = GetComponentDetailsFromGraph(component["component_id"])
+                if part:
+                    product_obj.part.connect(part)
+                    print(f"Component {component['component_id']} connected to product {product_id}")
+
+
+def ConnectComponentsToSuppliers(customer_id, order_id, products):
+    """Connect components to suppliers."""
+    if not products:
+        print("Invalid products")
+        return
+
+    print("Connecting components to suppliers...")
+    for product in products:
+        # TODO: Replace with actual API call to BOM service
+        response = {"product_id": product["id"], "components": [{"component_id": "P12345"}]}
+        components = response["components"]
+
+        for component in components:
+            part = GetComponentDetailsFromGraph(component["component_id"])
+            if part:
+                # TODO: Replace with actual API call to supplier service
+                response = {"component_id": component["component_id"], "suppliers": [{"supplier_id": "S12345"}]}
+                suppliers = response["suppliers"]
+
+                for supplier in suppliers:
+                    current_supplier = GetSupplierDetailsFromGraph(supplier["supplier_id"])
+                    if current_supplier:
                         part.supplier.connect(current_supplier)
-
-def Notify(customer_id,order_id,products):
-    print("update the inventory")
-   
+                        print(f"Component {component['component_id']} connected to supplier {supplier['supplier_id']}")
 
 
+def Notify(customer_id, order_id, products):
+    """Send a notification event."""
+    print("Updating the inventory and notifying...")
+    if not customer_id or not order_id:
+        print("Invalid customer_id or order_id")
+        return
 
+    publish_event("message", json.dumps({"message": "Knowledge graph updated successfully!"}))
+    print("Knowledge graph updated successfully.")
