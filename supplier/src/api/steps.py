@@ -129,21 +129,6 @@ def create_supplier_nodes_in_knowledge_graph_helper(supplier_id,location_id,item
                     # Otherwise pass them as positional arguments
                     result = invoke(function_name, *arguments)
                         
-            
-            # Function to delete orphan nodes
-    def delete_orphan_nodes():
-        try:
-            # Run the query to match nodes with no relationships
-            query = """
-            MATCH (n)
-            WHERE NOT (n)-[]-()
-            DELETE n
-            """
-            # Execute the query via the Neo4j connection
-            db.cypher_query(query, {})
-            print("Orphan nodes deleted successfully.")
-        except Exception as e:
-            print(f"Error occurred: {e}")
 
 def delete_orphan_nodes():
     try:
