@@ -1,8 +1,9 @@
 from neomodel import StructuredNode, StringProperty, FloatProperty, ArrayProperty,JSONProperty,UniqueIdProperty
 from src.utils.graph import connection
-from src.dao.inventory import ProductInventory
-from src.dao.metadata import ProductMetadata
-from src.dao.pricing import ProductPricing
+from src.dao.products.inventory import ProductInventory
+from src.dao.products.metadata import ProductMetadata
+from src.dao.products.pricing import ProductPricing
+from src.dao.components.details import ComponentDetails
 
 class ProductDetails(StructuredNode):
     uid = UniqueIdProperty()
@@ -27,3 +28,4 @@ class ProductDetails(StructuredNode):
     inventory = connection.create_relationship_to('ProductInventory','HAS_A')
     metadata =  connection.create_relationship_to('ProductMetadata','HAS_A')
     pricing =  connection.create_relationship_to('ProductPricing','HAS_A')
+    part =  connection.create_relationship_to('ComponentDetails','HAS_A')

@@ -1,6 +1,6 @@
 
 
-from src.functions.functions import ConnectComponentToProduct, ConnectCustomertoOrder, ConnectOrderToProduct, ConnectComponentsToSuppliers, UpdateInventory
+from src.functions.functions import ConnectComponentToProduct, ConnectCustomertoOrder, ConnectOrderToProduct, ConnectComponentsToSuppliers, Notify
 
 
 function_registry = {
@@ -8,5 +8,5 @@ function_registry = {
    "ConnectOrderToProduct":ConnectOrderToProduct,
    "ConnectComponentToProduct":ConnectComponentToProduct,
    "ConnectComponentsToSuppliers":ConnectComponentsToSuppliers,
-   "UpdateInventory":UpdateInventory
+   "Notify":Notify
 }

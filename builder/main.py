@@ -31,7 +31,7 @@ prompt_template = PromptTemplate(input_variables=["parameters"], template="""
                                  
     5. Update the inventory
     - **Step:** 5 
-    - **Action:** UpdateInventory (parameters: {parameters})
+    - **Action:** Notify (parameters: {parameters})
 
 
     Response Format:  
@@ -61,10 +61,10 @@ chain = LLMChain(prompt=prompt_template, llm=model)
 # Parameters
 parameters = {
     "customer_id": "CUST12345", 
-    "order_id": "ORD12345",
+    "order_id": "ORD123456",
     "products": [
         {
-            "id": "P12345",
+            "id": "PRD12345",
             "qty": "1"
         }
     ]
