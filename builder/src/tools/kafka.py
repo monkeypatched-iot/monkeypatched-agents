@@ -63,7 +63,7 @@ def consume_event(topic):
                 continue
             elif msg.error():
                 # If there's an error, print it
-                if msg.error().code() == KafkaError._PARTITION_EOF:
+                if msg.error().code() == KafkaErrorSSS._PARTITION_EOF: # type: ignore
                     print(f"End of partition reached {msg.partition} at offset {msg.offset}")
                 else:
                     raise KafkaException(msg.error())
