@@ -15,6 +15,7 @@ import os
 load_dotenv()  # Load variables from .env
 
 CSV_API_BASE_URL = os.getenv("CSV_API_BASE_URL")
+PDF_API_BASE_URL = os.getenv("PDF_API_BASE_URL")
 
 
 app = FastAPI()
@@ -85,8 +86,6 @@ def index_given_document_helper(document_type:str,file: UploadFile = File(...)):
 
     steps = extracted_data
 
-    print(steps)
-
     if len(steps) == 0 :
         # Improved regex to correctly match standalone JSON objects
         pattern = re.compile(r"\{(?:[^{}]|(?:\{[^{}]*\}))*\}", re.DOTALL)
@@ -141,10 +140,10 @@ def delete_orphan_nodes():
 
 
  
-@app.post("/v1/csv/upload/{type}")
-async def upload_csv(type:str,file: UploadFile = File(...)):
+@app.post("/v1/file/upload/type/{type}/subtype/{subtype}")
+async def upload_file(type:str,subtype:str,file: UploadFile = File(...)):
 
-    if type == "csv":
+    if type == "csv" and subtype == "none":
 
         response = post_file(f"{CSV_API_BASE_URL}/v1/csv/upload",file)
 
@@ -153,4 +152,35 @@ async def upload_csv(type:str,file: UploadFile = File(...)):
         response_dict = json.loads(json_string)
         
         if response_dict["message"]:
+
             index_given_document_helper(type,file)
+    
+    if type == "pdf" and subtype == "document":
+
+        response = post_file(f"{PDF_API_BASE_URL}/v1/pdf/upload/{subtype}",file)
+
+        json_string = response.content.decode("utf-8")
+
+        response_dict = json.loads(json_string)
+
+        if response_dict["message"] == 'Uploaded successfully':
+            
+            index_given_document_helper(type,file)
+
+    
+    if type == "docx" and subtype == "word":
+
+        response = post_file(f"{PDF_API_BASE_URL}/v1/docx/upload",file)
+
+        json_string = response.content.decode("utf-8")
+
+        response_dict = json.loads(json_string)
+
+        index_given_document_helper(type,file)
+
+    if type == "image" and subtype == "jpeg":
+
+        response = post_file(f"{PDF_API_BASE_URL}/v1/upload/image",file)
+
+        json_string = response.content.decode("utf-8")
+

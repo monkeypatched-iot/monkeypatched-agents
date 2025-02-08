@@ -7,3 +7,4 @@ uvicorn
 fastapi
 langchain_ollama
 confluent-kafka
+python-multipart
