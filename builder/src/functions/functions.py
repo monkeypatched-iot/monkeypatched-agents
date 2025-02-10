@@ -15,6 +15,7 @@ load_dotenv()  # Load variables from .env
 
 BASE_URL = os.getenv("API_BASE_URL")
 
+
 def GetOrderDetailsFromGraph(order_id):
     """Fetch order details from the knowledge graph."""
     if not order_id:
@@ -164,9 +165,14 @@ def ConnectComponentToProduct(customer_id, order_id, products):
             product_obj = GetProductDetailsFromGraph(product_id)
 
             if product_obj:
-                # TODO: Replace with actual API call to BOM service
-                response = {"product_id": product_id, "components": [{"component_id": "P12345"}]}
-                components = response["components"]
+                
+                response = get(f"{BASE_URL}/v1/bill-of-materials/{product_id}")
+
+                json_string = response.content.decode("utf-8")
+
+                component_dict = json.loads(json_string)
+
+                components = component_dict["components"]
 
                 for component in components:
                     part = GetComponentDetailsFromGraph(component["component_id"])
