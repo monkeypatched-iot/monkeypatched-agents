@@ -17,6 +17,7 @@ from src.functions.functions import handle_author
 from src.functions.functions import handle_doc_subtype
 from src.functions.functions import handle_tags
 from src.helpers.helper import check_substring
+from src.utils.constants import document_types, users
 
 # Load environment variables
 load_dotenv()
@@ -41,42 +42,40 @@ s3_client = boto3.client(
 model = OllamaLLM(model="deepseek-r1:1.5b", temperature=0.0)
 
 # Session state tracking
-
-# todo: this should be in redis 
-
 session_state = {}
 
-steps_state = []
+steps_state = ["intitate file upload"]
 
 # Generate LLM response
 def generate_completion(message):
     """Uses LLM to generate a response."""
 
     response = model.invoke(ChatPromptTemplate.from_template("{message}").format(message=message))
+
+
     print("LLM Response:", response)
 
-    if message == "upload document": 
+    if message == "action:upload document": 
         
         # todo add more combinations here to enable the document upload
 
-        if check_substring(response, "attach files directly"):
+        if check_substring(response, "attach files directly") or check_substring(response,"Okay, so I need to figure out how to upload a document.") or check_substring(response,"I can't directly upload documents.")  :
             print("Substring found! Resetting session state.")
-            steps_state.append("csv file")
+            steps_state.append("intitate file upload")
             return handle_doc_type(message,session_state)
         else:
             print("Substring not found.")
             return response.content if hasattr(response, "content") else str(response)
     elif message == "csv" :
         prev = steps_state.pop()
-        if prev == "csv file":
+        if prev == "intitate file upload":
             steps_state.append(message)
             return handle_doc_subtype(message,session_state)
         else:
             print("Substring not found.")
             return response.content if hasattr(response, "content") else str(response)
-    elif message in ["Prashun Javeri"]:
-
-        # todo: names must come from valid user list
+    elif message in users :
+        # todo users must come from user api
 
         prev = steps_state.pop()
         if prev == "csv":
@@ -87,10 +86,7 @@ def generate_completion(message):
             return response.content if hasattr(response, "content") else str(response)
         
 
-    elif message in ["documents","invoice"]:
-        
-        # todo: need a list of document types
-
+    elif message in document_types:
         prev = steps_state.pop()
         if prev == "author":
             steps_state.append("tags")
@@ -142,8 +138,9 @@ def generate_completion(message):
         print("Substring not found.")
         return response.content if hasattr(response, "content") else str(response)
 
-def chatbot_response(message, history, file):
+def chatbot_response(message, history):
     """Handles chatbot message and visibility of file upload."""
+    print(message)
 
     # Generate chatbot response
     response = generate_completion(message)
@@ -154,7 +151,7 @@ def chatbot_response(message, history, file):
 
     print(session_state)
     if "file_name" in session_state.keys() and session_state["file_name"] :
-        if session_state["doc_type"] == "upload document" and session_state["doc_subtype"] == "csv" :
+        if session_state["doc_type"] == "action:upload document" and session_state["doc_subtype"] == "csv" :
          handle_upload(session_state["file_name"],session_state)
 
     return history

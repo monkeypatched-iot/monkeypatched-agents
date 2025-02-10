@@ -14,6 +14,7 @@ load_dotenv()  # Load variables from .env
 
 CSV_API_BASE_URL = os.getenv("CSV_API_BASE_URL")
 PDF_API_BASE_URL = os.getenv("PDF_API_BASE_URL")
+WORD_API_BASE_URL = os.getenv("WORD_API_BASE_URL")
 
 def IndexDocument(type,file_name):
     print(type,file_name)

@@ -44,4 +44,6 @@ def upload_to_s3(file_content, file_name: str):
     except Exception as e:
         print(f"Error uploading file to S3: {str(e)}")
         return False
+    
+
 
