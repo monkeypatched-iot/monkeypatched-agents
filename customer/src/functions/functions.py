@@ -2,7 +2,7 @@ from src.dao.metadata import CustomerMetadata
 from src.dao.metrics import CustomerOrderMetrics
 from src.dao.payment import CustomerPaymentData
 from src.tools.requests import get
-from src.tools.kafka import publish_event
+from src.tools.nats import publish_event
 from src.utils.graph import connection
 from src.dao.details import CustomerDetails
 import json

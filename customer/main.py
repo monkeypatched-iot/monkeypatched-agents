@@ -9,9 +9,6 @@ def create_customer_nodes_in_knowledge_graph(customer_id: str):
         create_customer_nodes_in_knowledge_graph_helper(customer_id)
         return {"message": "Customer nodes created successfully"}
     except Exception as e:
-        print('clean up orphan nodes')
-        try:
-            delete_orphan_nodes()
-        except Exception as e:
-            print('failed to delete orphan nodes')
-            raise HTTPException(status_code=500, detail=f"Error occurred: {e}")
+        print(f'exception occured {e}')
+        raise HTTPException(status_code=500, detail="Failed to create order.")
+

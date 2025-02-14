@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from langchain_ollama.llms import OllamaLLM
 from langchain.prompts import PromptTemplate
@@ -8,7 +10,13 @@ import logging
 from src.utils.invoker import invoke
 from neomodel import db
 
+
+load_dotenv()  # Load variables from .env
+
 logging.basicConfig(level=logging.INFO)
+
+OLAMMA_BASE_URL = os.getenv("OLAMMA_BASE_URL")
+MODEL_NAME = os.getenv("MODEL_NAME")
 
 app = FastAPI()
 
@@ -59,17 +67,27 @@ def create_customer_nodes_in_knowledge_graph_helper(customer_id:str):
                                                                                 
     """)
 
-    model = OllamaLLM(model="deepseek-r1:1.5b",temperature=0.0)
 
-    chain = LLMChain(prompt=prompt_template, llm=model)
+    # Initialize Ollama model
+    model = OllamaLLM(model=MODEL_NAME, temperature=0.0 , base_url= OLAMMA_BASE_URL)
+
+ 
+    chain = prompt_template | model
+
+
     #pass all params hereS
     parameters_json = json.dumps({"customer_id": customer_id})
 
     query = {"parameters": parameters_json}
 
-    # Invoke the chain with the customer_id parameter
-    response = chain.run(query)
+    print(query)
 
+    # Invoke the chain with the customer_id parameter
+    response = chain.invoke(query)
+
+    print(response)
+
+    
     # Improved regex to correctly match standalone JSON objects
     pattern = re.compile(r"\{(?:[^{}]|(?:\{[^{}]*\}))*\}", re.DOTALL)
 

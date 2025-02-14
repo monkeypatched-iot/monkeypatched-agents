@@ -1,12 +1,21 @@
+import os
+import re
+from dotenv import load_dotenv
 from neo4j import GraphDatabase
 from neomodel import config, StructuredNode,RelationshipTo,RelationshipFrom,db
 from src.utils.logger import logger
 
+load_dotenv()  # Load variables from .env
+
+NEO4J_URI = os.getenv("NEO4J_URI")
+
 # Create a connection to the Neo4j database
 class Neo4jGraphDB:
     def __init__(self, uri, user, password):
-        self._driver = GraphDatabase.driver(uri, auth=(user, password))
-        config.DATABASE_URL = f"bolt://{user}:{password}@localhost:7687"
+        self._driver = GraphDatabase.driver( uri, auth=(user, password))
+        match = re.search(r'//(\d+\.\d+\.\d+\.\d+)', uri)
+        ip_address =  match.group(1)
+        config.DATABASE_URL = config.DATABASE_URL = f"bolt://{user}:{password}@{ip_address}:7687"
 
 
     def close(self):
@@ -81,17 +90,3 @@ class Neo4jGraphDB:
         except RuntimeError as e:
             logger.error(f'getting data from from node')
             logger.error(e)
-  
-    def delete_orphan_nodes():
-        try:
-            # Run the query to match nodes with no relationships
-            query = """
-            MATCH (n)
-            WHERE NOT (n)-[]-()
-            DELETE n
-            """
-            # Execute the query via the Neo4j connection
-            db.cypher_query(query, {})
-            print("Orphan nodes deleted successfully.")
-        except Exception as e:
-            print(f"Error occurred: {e}")
