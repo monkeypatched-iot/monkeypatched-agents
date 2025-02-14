@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from langchain_ollama.llms import OllamaLLM
 from langchain.prompts import PromptTemplate
@@ -7,6 +9,16 @@ import json
 import logging
 from src.utils.invoker import invoke
 from neomodel import db
+
+load_dotenv()  # Load variables from .env
+
+logging.basicConfig(level=logging.INFO)
+
+OLAMMA_BASE_URL = os.getenv("OLAMMA_BASE_URL")
+MODEL_NAME = os.getenv("MODEL_NAME")
+
+# Initialize Ollama model
+model = OllamaLLM(model=MODEL_NAME, temperature=0.0 , base_url= OLAMMA_BASE_URL)
 
 def create_order_nodes_in_knowledge_graph_helper(order_id:str):
     prompt_template = PromptTemplate(input_variables=["parameters"], template="""
@@ -35,7 +47,7 @@ def create_order_nodes_in_knowledge_graph_helper(order_id:str):
         - **Step:** 5  
         - **Action:** GetOrderShippingInformation (parameters: {parameters}) 
                                         
-        6. Add a Order
+        6. Add a new Order
         - **Step:** 6 
         - **Action:** AddOrder (parameters: {parameters}) 
                                         
@@ -57,16 +69,14 @@ def create_order_nodes_in_knowledge_graph_helper(order_id:str):
                                                                                     
         """)
 
-    model = OllamaLLM(model="deepseek-r1:1.5b",temperature=0.0)
-
-    chain = LLMChain(prompt=prompt_template, llm=model)
+    chain = prompt_template | model
     #pass all params hereS
     parameters_json = json.dumps({"order_id": order_id})
 
     query = {"parameters": parameters_json}
 
     # Invoke the chain with the Order_id parameter
-    response = chain.run(query)   
+    response = chain.invoke(query)   
 
     print(response)
 

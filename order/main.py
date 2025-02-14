@@ -10,9 +10,5 @@ def create_order_nodes_in_knowledge_graph(order_id: str):
         return {"message": "Order nodes created successfully"}
     except Exception as e:
         print('clean up orphan nodes')
-        try:
-            delete_orphan_nodes()
-        except Exception as e:
-            print('failed to delete orphan nodes')
-            raise HTTPException(status_code=500, detail=f"Error occurred: {e}")
+        raise HTTPException(status_code=500, detail=f"Error occurred: {e}")
         

@@ -15,7 +15,6 @@ az login
 
 sudo az acr login --name monkeypatched
 
-
 # tag container
 sudo docker tag  monkeypatched/customer-agent:latest  monkeypatched.azurecr.io/agent/customer-agent:latest 
 

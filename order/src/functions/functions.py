@@ -10,7 +10,7 @@ from src.dao.metrics import OrderMetrics
 from src.dao.payment import OrderPayment
 from src.dao.shipping import OrderShipping
 from src.utils.graph import connection
-from src.tools.kafka import publish_event
+from src.tools.nats import publish_event
 
 load_dotenv()  # Load variables from .env
 
