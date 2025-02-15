@@ -4,7 +4,7 @@ from requests import get
 from dotenv import load_dotenv
 import os
 
-from src.tools.kafka import publish_event
+from src.tools.nats import publish_event
 from src.dao.details import ComponentDetails
 from src.dao.metadata import ComponentMetadata
 from src.dao.inventory import ComponentInventory
