@@ -1,4 +1,6 @@
+import os
 import re
+from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate
 from langchain_ollama import OllamaLLM
 from langchain.chains import LLMChain
@@ -7,6 +9,16 @@ from neomodel import db
 
 from src.utils.invoker import invoke
 from src.utils.logger import logging
+
+load_dotenv()  # Load variables from .env
+
+logging.basicConfig(level=logging.INFO)
+
+OLAMMA_BASE_URL = os.getenv("OLAMMA_BASE_URL")
+MODEL_NAME = os.getenv("MODEL_NAME")
+
+# Initialize Ollama model
+model = OllamaLLM(model=MODEL_NAME, temperature=0.0 , base_url= OLAMMA_BASE_URL)
 
 def create_product_nodes_in_knowledge_graph_helper(product_id: str,location_id:str):
     prompt_template = PromptTemplate(input_variables=["parameters"], template="""
@@ -52,9 +64,7 @@ def create_product_nodes_in_knowledge_graph_helper(product_id: str,location_id:s
                                                                                     
         """)
 
-    model = OllamaLLM(model="deepseek-r1:1.5b",temperature=0.0)
-
-    chain = LLMChain(prompt=prompt_template, llm=model)
+    chain =  prompt_template | model
         
     #pass all params hereS
     parameters_json = json.dumps({"product_id": product_id,"location_id":location_id})
@@ -62,7 +72,9 @@ def create_product_nodes_in_knowledge_graph_helper(product_id: str,location_id:s
     query = {"parameters": parameters_json}
 
     # Invoke the chain with the customer_id parameter
-    response = chain.run(query)
+    response = chain.invoke(query)
+
+    print(response)
 
     pattern = re.compile(r"\{(?:[^{}]|(?:\{[^{}]*\}))*\}", re.DOTALL)
 
@@ -98,12 +110,6 @@ def create_product_nodes_in_knowledge_graph_helper(product_id: str,location_id:s
             else:
                 # Otherwise pass them as positional arguments
                 result = invoke(function_name, *arguments)
-        else:
-            # Call function without parameters
-            print(step)
-            # function_name = step["action"]
-            # result = invoke(function_name)
-            logging.info(f"Result from invoking {function_name} without parameters: {result}")
 
 def delete_orphan_nodes():
     try:

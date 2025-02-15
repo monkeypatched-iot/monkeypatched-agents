@@ -1,7 +1,7 @@
 import json
 from dotenv import load_dotenv
 import os
-from src.tools.kafka import publish_event
+from src.tools.nats import publish_event
 from src.dao.pricing import ProductPricing
 from src.dao.inventory import ProductInventory
 from src.dao.metadata import ProductMetadata
@@ -22,11 +22,13 @@ Pricing = connection.create_node(ProductPricing)
 product_aggregate = {}
 
 def GetProductDetails(product_id,location_id):
+    print(product_id)
     if product_id != "product_id":
-        print(product_id,location_id)
-        print("getting product details!")
 
         response = get(f"{BASE_URL}/v1/product/details/{product_id}")
+        # https://product-api.happyfield-567241c8.westus2.azurecontainerapps.io/v1/product/details/PRD-001
+
+        print(response)
 
         # Step 1: Decode binary to string
         json_string = response.content.decode("utf-8")
