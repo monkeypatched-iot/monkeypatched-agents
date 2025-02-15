@@ -1,3 +1,6 @@
+import json
+import os
+from dotenv import load_dotenv
 from langchain_ollama.llms import OllamaLLM
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
@@ -7,6 +10,11 @@ import ast  # To safely convert the string representation of a dictionary to an 
 from neomodel import db
 from src.vo.graph import KnowledgeGraphRequest
 from src.utils.invoker import invoke
+
+load_dotenv()  # Load variables from .env
+
+OLAMMA_BASE_URL = os.getenv("OLAMMA_BASE_URL")
+MODEL_NAME = os.getenv("MODEL_NAME")
 
 def create_knowledge_graph_helper(request: KnowledgeGraphRequest):
     prompt_template = PromptTemplate(input_variables=["parameters"], template="""
@@ -53,9 +61,12 @@ def create_knowledge_graph_helper(request: KnowledgeGraphRequest):
         - Maintain the order of the steps
     """)
 
+    # Initialize Ollama model
+    model = OllamaLLM(model=MODEL_NAME, temperature=0.0 , base_url= OLAMMA_BASE_URL)
+
+
     # Initialize LLM
-    model = OllamaLLM(model="deepseek-r1:1.5b", temperature=0.0)
-    chain = LLMChain(prompt=prompt_template, llm=model)
+    chain = prompt_template | model
 
     # Parameters
     parameters = request.dict()
@@ -63,23 +74,26 @@ def create_knowledge_graph_helper(request: KnowledgeGraphRequest):
     query = {"parameters": parameters}
 
     # Invoke the chain with the parameters
-    response = chain.run(query)   
+    response = chain.invoke(query)   
     print(response)
 
     # Regex pattern to extract action and parameters
-    pattern = r"action:\s*(\S+)\s*parameters:\s*(\{.*\})"
+   # Regex to extract action and parameters
+    pattern = r'"action":\s*"([^"]+)",\s*"parameters":\s*(\{(?:[^{}]|(?:\{[^}]*\}))*\})'
 
-    # Find all matches in the text
     matches = re.findall(pattern, response)
+
+    print(matches)
+
 
     # Convert extracted matches into proper JSON format (as Python objects)
     extracted_data = []
     for match in matches:
         action = match[0]
-        parameters = ast.literal_eval(match[1])  # Safely convert the string representation to a dictionary
+        parameters = match[1]
         extracted_data.append({
-            "action": action,
-            "parameters": parameters
+            "action":action,
+            "parameters":parameters
         })
 
     steps = extracted_data
@@ -97,6 +111,7 @@ def create_knowledge_graph_helper(request: KnowledgeGraphRequest):
                 if isinstance(arguments, dict):
                     result = invoke(function_name, **arguments)
                 if isinstance(arguments, str):
+                    arguments = json.loads(arguments)
                     result = invoke(function_name, arguments)
                 else:
                     # Otherwise pass them as positional arguments

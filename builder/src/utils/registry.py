@@ -4,7 +4,7 @@ from src.functions.functions import ConnectComponentToProduct, ConnectCustomerto
 
 
 function_registry = {
-   "ConnectCustomertoOrder":ConnectCustomertoOrder,
+   "ConnectCustomerToOrder":ConnectCustomertoOrder,
    "ConnectOrderToProduct":ConnectOrderToProduct,
    "ConnectComponentToProduct":ConnectComponentToProduct,
    "ConnectComponentsToSuppliers":ConnectComponentsToSuppliers,

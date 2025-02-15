@@ -1,3 +1,4 @@
+import re
 from neo4j import GraphDatabase
 from neomodel import config, StructuredNode,RelationshipTo,RelationshipFrom,db
 from src.utils.logger import logger
@@ -5,8 +6,10 @@ from src.utils.logger import logger
 # Create a connection to the Neo4j database
 class Neo4jGraphDB:
     def __init__(self, uri, user, password):
-        self._driver = GraphDatabase.driver(uri, auth=(user, password))
-        config.DATABASE_URL = f"bolt://{user}:{password}@localhost:7687"
+        self._driver = GraphDatabase.driver( uri, auth=(user, password))
+        match = re.search(r'//(\d+\.\d+\.\d+\.\d+)', uri)
+        ip_address =  match.group(1)
+        config.DATABASE_URL = config.DATABASE_URL = f"bolt://{user}:{password}@{ip_address}:7687"
 
 
     def close(self):

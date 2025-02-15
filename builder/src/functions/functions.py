@@ -2,7 +2,7 @@ import json
 import os
 
 from dotenv import load_dotenv
-from src.tools.kafka import publish_event
+from src.tools.nats import publish_event
 from src.tools.requests import get
 from src.dao.suppliers.details import SupplierDetails
 from src.dao.components.details import ComponentDetails
@@ -14,6 +14,7 @@ from src.dao.customers.details import CustomerDetails
 load_dotenv()  # Load variables from .env
 
 BASE_URL = os.getenv("API_BASE_URL")
+BOM_BASE_URL = os.getenv("BOM_BASE_URL")
 
 
 def GetOrderDetailsFromGraph(order_id):
@@ -111,7 +112,11 @@ def GetSupplierDetailsFromGraph(supplier_id):
     return None
 
 
-def ConnectCustomertoOrder(customer_id, order_id, products):
+def ConnectCustomertoOrder(parameters):
+    customer_id = parameters["customer_id"]
+    order_id = parameters["order_id"]
+    products = parameters["products"]
+
     """Connect a customer to an order."""
     if customer_id != "customer_id":
         if not customer_id or not order_id:
@@ -129,8 +134,11 @@ def ConnectCustomertoOrder(customer_id, order_id, products):
             print("Failed to connect customer to order.")
 
 
-def ConnectOrderToProduct(customer_id, order_id, products):
+def ConnectOrderToProduct(parameters):
     """Connect an order to products."""
+    customer_id = parameters["customer_id"]
+    order_id = parameters["order_id"]
+    products = parameters["products"]
 
     if customer_id != "customer_id":
         if not order_id or not products:
@@ -151,8 +159,12 @@ def ConnectOrderToProduct(customer_id, order_id, products):
             print("Failed to connect order to products.")
 
 
-def ConnectComponentToProduct(customer_id, order_id, products):
+def ConnectComponentToProduct(parameters):
     """Connect components to products."""
+    customer_id = parameters["customer_id"]
+    order_id = parameters["order_id"]
+    products = parameters["products"]
+
     if customer_id != "customer_id":
 
         if not products:
@@ -166,7 +178,7 @@ def ConnectComponentToProduct(customer_id, order_id, products):
 
             if product_obj:
                 
-                response = get(f"{BASE_URL}/v1/bill-of-materials/{product_id}")
+                response = get(f"{BOM_BASE_URL}/v1/bill-of-materials/{product_id}")
 
                 json_string = response.content.decode("utf-8")
 
@@ -181,8 +193,12 @@ def ConnectComponentToProduct(customer_id, order_id, products):
                         print(f"Component {component['component_id']} connected to product {product_id}")
 
 
-def ConnectComponentsToSuppliers(customer_id, order_id, products):
+def ConnectComponentsToSuppliers(parameters):
     """Connect components to suppliers."""
+    customer_id = parameters["customer_id"]
+    order_id = parameters["order_id"]
+    products = parameters["products"]
+
     if customer_id != "customer_id":
 
         if not products:
@@ -192,7 +208,7 @@ def ConnectComponentsToSuppliers(customer_id, order_id, products):
         for product in products:
             product_id = product["id"]
 
-            response = get(f"{BASE_URL}/v1/bill-of-materials/{product_id}")
+            response = get(f"{BOM_BASE_URL}/v1/bill-of-materials/{product_id}")
 
             json_string = response.content.decode("utf-8")
 
@@ -205,7 +221,7 @@ def ConnectComponentsToSuppliers(customer_id, order_id, products):
                 if part:
                     component_id = component["component_id"]
 
-                    response = get(f"{BASE_URL}/v1/component-suppliers/{component_id}")
+                    response = get(f"{BOM_BASE_URL}/v1/component-suppliers/{component_id}")
 
                     json_string = response.content.decode("utf-8")
 
@@ -220,8 +236,12 @@ def ConnectComponentsToSuppliers(customer_id, order_id, products):
                             print(f"Component {component['component_id']} connected to supplier {supplier['supplier_id']}")
 
 
-def Notify(customer_id, order_id, products):
+def Notify(parameters):
     """Send a notification event."""
+    customer_id = parameters["customer_id"]
+    order_id = parameters["order_id"]
+    products = parameters["products"]
+    
     print("Updating the inventory and notifying...")
     if not customer_id or not order_id:
         print("Invalid customer_id or order_id")
