@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from langchain_ollama.llms import OllamaLLM
 from langchain.prompts import PromptTemplate
@@ -7,6 +9,17 @@ import json
 import logging
 from src.utils.invoker import invoke
 from neomodel import db
+
+
+load_dotenv()  # Load variables from .env
+
+logging.basicConfig(level=logging.INFO)
+
+OLAMMA_BASE_URL = os.getenv("OLAMMA_BASE_URL")
+MODEL_NAME = os.getenv("MODEL_NAME")
+
+# Initialize Ollama model
+model = OllamaLLM(model=MODEL_NAME, temperature=0.0 , base_url= OLAMMA_BASE_URL)
 
 def create_supplier_nodes_in_knowledge_graph_helper(supplier_id,location_id,item_id):
     prompt_template = PromptTemplate(input_variables=["parameters"], template="""
@@ -75,12 +88,11 @@ def create_supplier_nodes_in_knowledge_graph_helper(supplier_id,location_id,item
         - maintain the order of the steps
         - do not add response
         - ignore first line
+        - igrnore your thoughts and return the required steps as is
                                                                                     
         """)
 
-    model = OllamaLLM(model="deepseek-r1:1.5b",temperature=0.0)
-
-    chain = LLMChain(prompt=prompt_template, llm=model)
+    chain =  prompt_template | model
 
     #pass all params hereS
     parameters_json = json.dumps({"supplier_id": supplier_id,"location_id":location_id,"item_id":item_id})
@@ -88,7 +100,7 @@ def create_supplier_nodes_in_knowledge_graph_helper(supplier_id,location_id,item
     query = {"parameters": parameters_json}
 
     # Invoke the chain with the Supplier_id parameter
-    response = chain.run(query)   
+    response = chain.invoke(query)   
 
     print(response)
 

@@ -1,5 +1,5 @@
 import json
-from src.tools.kafka import publish_event
+from src.tools.nats import publish_event
 from src.dao.shipping import SupplierShipping
 from src.dao.quality import SupplierQuality
 from src.dao.inventory import SupplierInventory
@@ -29,7 +29,7 @@ def GetSupplierDetails(supplier_id,item_id,location_id):
 
         print("getting the supplier details")
 
-        response = get(f"{BASE_URL}/v1/supplier/details/S12345")
+        response = get(f"{BASE_URL}/v1/supplier/details/{supplier_id}")
 
          # Step 1: Decode binary to string
         json_string = response.content.decode("utf-8")
@@ -48,7 +48,7 @@ def GetSupplierLocations(supplier_id,item_id,location_id):
 
         print("getting the supplier locatons")
 
-        response = get(f"{BASE_URL}/v1/supplier/S12345/locations/")
+        response = get(f"{BASE_URL}/v1/supplier/{supplier_id}/locations/")
 
         # Step 1: Decode binary to string
         json_string = response.content.decode("utf-8")
@@ -65,7 +65,7 @@ def GetSupplierLocations(supplier_id,item_id,location_id):
 def GetSupplierInventory(supplier_id,item_id,location_id):
     if supplier_id != "supplier_id":
         print("getting the supplier inventory")
-        response = get(f"{BASE_URL}/v1/supplier/S12345/inventory-info/")
+        response = get(f"{BASE_URL}/v1/supplier/{supplier_id}/inventory-info/")
 
         # Step 1: Decode binary to string
         json_string = response.content.decode("utf-8")
@@ -84,7 +84,7 @@ def GetSupplierPricing(supplier_id,item_id,location_id):
 
         print("getting the supplier pricing")
 
-        response = get(f"{BASE_URL}/v1/supplier/S12345/pricing-info/I98765")
+        response = get(f"{BASE_URL}/v1/supplier/{supplier_id}/pricing-info/{item_id}")
 
         # Step 1: Decode binary to string
         json_string = response.content.decode("utf-8")
@@ -103,7 +103,7 @@ def GetSupplierFinance(supplier_id,item_id,location_id):
 
         print('getting the supplier finance')
 
-        response = get(f"{BASE_URL}/v1/supplier/financials/S12345")
+        response = get(f"{BASE_URL}/v1/supplier/financials/{supplier_id}")
 
         # Step 1: Decode binary to string
         json_string = response.content.decode("utf-8")
@@ -120,7 +120,7 @@ def GetSupplierCapabilities(supplier_id,item_id,location_id):
 
         print("getting the supplier capablities")
 
-        response = get(f"{BASE_URL}/v1/supplier/capabilities/S12345")
+        response = get(f"{BASE_URL}/v1/supplier/capabilities/{supplier_id}")
 
         # Step 1: Decode binary to string
         json_string = response.content.decode("utf-8")
@@ -137,7 +137,7 @@ def GetSupplierCertifications(supplier_id,item_id,location_id):
 
         print("getting the supplier certifications")
 
-        response = get(f"{BASE_URL}/v1/supplier/certifications/S12345")
+        response = get(f"{BASE_URL}/v1/supplier/certifications/{supplier_id}")
         
         # Step 1: Decode binary to string
         json_string = response.content.decode("utf-8")
@@ -155,7 +155,7 @@ def GetSupplierQuality(supplier_id,item_id,location_id):
 
         print("getting the suppler quality metrics")
 
-        response = get(f"{BASE_URL}/v1/supplier/quality/S12345")
+        response = get(f"{BASE_URL}/v1/supplier/quality/{supplier_id}")
 
         # Step 1: Decode binary to string
         json_string = response.content.decode("utf-8")
@@ -172,7 +172,7 @@ def GetSupplierShipping(supplier_id,item_id,location_id):
 
         print("getting the supplier shipping information")
 
-        response = get(f"{BASE_URL}/v1/shipping-data/S12345/item/I98765")
+        response = get(f"{BASE_URL}/v1/shipping-data/{supplier_id}/item/{item_id}")
 
         # Step 1: Decode binary to string
         json_string = response.content.decode("utf-8")
@@ -189,7 +189,7 @@ def GetSupplierInventoryByLocation(supplier_id,item_id,location_id):
 
         print("get the supplier inventory for item by location")
 
-        response = get(f"{BASE_URL}/v1/supplier/S12345/locations/L23456/inventory-info/I98765")
+        response = get(f"{BASE_URL}/v1/supplier/{supplier_id}/locations/{location_id}/inventory-info/{item_id}")
 
         # Step 1: Decode binary to string
         json_string = response.content.decode("utf-8")
