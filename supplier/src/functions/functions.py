@@ -1,11 +1,8 @@
 import json
 from src.tools.nats import publish_event
-from src.dao.shipping import SupplierShipping
 from src.dao.quality import SupplierQuality
-from src.dao.inventory import SupplierInventory
 from src.dao.locations import SupplierLocation
 from src.dao.details import SupplierDetails
-from src.dao.pricing import SupplierPricing
 from src.dao.finances import SupplierFinancials
 from src.dao.capablities import SupplierCapabilities
 from src.dao.certifications import SupplierCertifications
@@ -24,7 +21,7 @@ BASE_URL = os.getenv("API_BASE_URL")
 
 supplier_aggregate = {}
 
-def GetSupplierDetails(supplier_id,item_id,location_id):
+def GetSupplierDetails(supplier_id):
     if supplier_id != "supplier_id":
 
         print("getting the supplier details")
@@ -43,7 +40,7 @@ def GetSupplierDetails(supplier_id,item_id,location_id):
 
         connection.add(SupplierDetails(**supplier_dict))
 
-def GetSupplierLocations(supplier_id,item_id,location_id):
+def GetSupplierLocations(supplier_id):
     if supplier_id != "supplier_id":
 
         print("getting the supplier locatons")
@@ -62,43 +59,7 @@ def GetSupplierLocations(supplier_id,item_id,location_id):
 
         connection.add(SupplierLocation(**supplier_locations_dict[0]))
 
-def GetSupplierInventory(supplier_id,item_id,location_id):
-    if supplier_id != "supplier_id":
-        print("getting the supplier inventory")
-        response = get(f"{BASE_URL}/v1/supplier/{supplier_id}/inventory-info/")
-
-        # Step 1: Decode binary to string
-        json_string = response.content.decode("utf-8")
-
-        # Step 2: Convert string to JSON (Python dictionary)
-        supplier_inventory_dict = json.loads(json_string)
-
-        print(supplier_inventory_dict)
-
-        supplier_aggregate["inventory"] = supplier_inventory_dict
-
-        connection.add(SupplierInventory(**supplier_inventory_dict[0]))
-
-def GetSupplierPricing(supplier_id,item_id,location_id):
-    if supplier_id != "supplier_id":
-
-        print("getting the supplier pricing")
-
-        response = get(f"{BASE_URL}/v1/supplier/{supplier_id}/pricing-info/{item_id}")
-
-        # Step 1: Decode binary to string
-        json_string = response.content.decode("utf-8")
-
-        # Step 2: Convert string to JSON (Python dictionary)
-        supplier_pricing_dict = json.loads(json_string)
-
-        print(supplier_pricing_dict)
-
-        supplier_aggregate["pricing"] = supplier_pricing_dict
-
-        connection.add(SupplierPricing(**supplier_pricing_dict))
-
-def GetSupplierFinance(supplier_id,item_id,location_id):
+def GetSupplierFinance(supplier_id):
     if supplier_id != "supplier_id":
 
         print('getting the supplier finance')
@@ -115,7 +76,7 @@ def GetSupplierFinance(supplier_id,item_id,location_id):
 
         connection.add(SupplierFinancials(**supplier_finance_dict))
 
-def GetSupplierCapabilities(supplier_id,item_id,location_id):
+def GetSupplierCapabilities(supplier_id):
     if supplier_id != "supplier_id":
 
         print("getting the supplier capablities")
@@ -132,7 +93,7 @@ def GetSupplierCapabilities(supplier_id,item_id,location_id):
 
         connection.add(SupplierCapabilities(**supplier_capabilities_dict))
 
-def GetSupplierCertifications(supplier_id,item_id,location_id):
+def GetSupplierCertifications(supplier_id):
     if supplier_id != "supplier_id":
 
         print("getting the supplier certifications")
@@ -150,7 +111,7 @@ def GetSupplierCertifications(supplier_id,item_id,location_id):
         connection.add(SupplierCertifications(**supplier_certifications_dict))
        
 
-def GetSupplierQuality(supplier_id,item_id,location_id):
+def GetSupplierQuality(supplier_id):
     if supplier_id != "supplier_id":
 
         print("getting the suppler quality metrics")
@@ -166,38 +127,6 @@ def GetSupplierQuality(supplier_id,item_id,location_id):
         print(supplier_quality_dict)
 
         connection.add(SupplierQuality(**supplier_quality_dict))
-
-def GetSupplierShipping(supplier_id,item_id,location_id):
-    if supplier_id != "supplier_id":
-
-        print("getting the supplier shipping information")
-
-        response = get(f"{BASE_URL}/v1/shipping-data/{supplier_id}/item/{item_id}")
-
-        # Step 1: Decode binary to string
-        json_string = response.content.decode("utf-8")
-
-        # Step 2: Convert string to JSON (Python dictionary)
-        supplier_shipping_dict = json.loads(json_string)
-
-        print(supplier_shipping_dict)
-
-        connection.add(SupplierShipping(**supplier_shipping_dict))
-
-def GetSupplierInventoryByLocation(supplier_id,item_id,location_id):
-    if supplier_id != "supplier_id":
-
-        print("get the supplier inventory for item by location")
-
-        response = get(f"{BASE_URL}/v1/supplier/{supplier_id}/locations/{location_id}/inventory-info/{item_id}")
-
-        # Step 1: Decode binary to string
-        json_string = response.content.decode("utf-8")
-
-        # Step 2: Convert string to JSON (Python dictionary)
-        supplier_inventory_dict = json.loads(json_string)
-
-        print(supplier_inventory_dict)
 
 def GetSupplierDetailsFromGraph(supplier_id):
     if not supplier_id:  # Handles None, empty strings
@@ -233,39 +162,7 @@ def GetSupplierLocationsFromGraph(supplier_id):
 
     return None
 
-def GetSupplierInventoryFromGraph(supplier_id):
-    if not supplier_id:  # Handles None, empty strings
-        logging.warning("Invalid supplier_id provided")
-        return None
-    
-    logging.info(f"Fetching supplier inventory for ID: {supplier_id}")
-    try:
-        supplier_inventory = SupplierInventory.nodes.get_or_none(supplier_id=supplier_id)
-        if supplier_inventory:
-            logging.info(f"Supplier inventory found: {supplier_inventory}")
-            return supplier_inventory
-        logging.info(f"No supplier inventory found for supplier_id: {supplier_id}")
-    except Exception as e:
-        logging.error(f"Error fetching supplier inventory: {e}", exc_info=True)
 
-    return None
-
-def GetSupplierPricingFromGraph(supplier_id):
-    if not supplier_id:  # Handles None, empty strings
-        logging.warning("Invalid supplier_id provided")
-        return None
-    
-    logging.info(f"Fetching supplier pricing for ID: {supplier_id}")
-    try:
-        supplier_pricing = SupplierPricing.nodes.get_or_none(supplier_id=supplier_id)
-        if supplier_pricing:
-            logging.info(f"Supplier pricing found: {supplier_pricing}")
-            return supplier_pricing
-        logging.info(f"No supplier pricing found for supplier_id: {supplier_id}")
-    except Exception as e:
-        logging.error(f"Error fetching supplier pricing: {e}", exc_info=True)
-
-    return None
 
 def GetSupplierFinanceFromGraph(supplier_id):
     if not supplier_id:  # Handles None, empty strings
@@ -335,26 +232,6 @@ def GetSupplierQualityFromGraph(supplier_id):
 
     return None
 
-def GetSupplierShippingFromGraph(supplier_id):
-    if not supplier_id:  # Handles None, empty strings
-        logging.warning("Invalid supplier_id provided")
-        return None
-    
-    logging.info(f"Fetching supplier shipping details for ID: {supplier_id}")
-    try:
-        supplier_shipping = SupplierShipping.nodes.get_or_none(supplier_id=supplier_id)
-        if supplier_shipping:
-            logging.info(f"Supplier shipping details found: {supplier_shipping}")
-            return supplier_shipping
-        
-        logging.info(f"No supplier shipping details found for supplier_id: {supplier_id}")
-    except Exception as e:
-        logging.error(f"Error fetching supplier shipping details for supplier_id {supplier_id}: {e}", exc_info=True)
-
-    return None
-
-
-
 def publish_supplier(supplier_aggregate: dict) -> None:
     """Publishes supplier data to Kafka."""
     try:
@@ -374,7 +251,7 @@ def publish_supplier(supplier_aggregate: dict) -> None:
         logging.error(f"Error publishing supplier data: {e}")
         raise  # Re-raise the error for better debugging
 
-def AddSupplier(supplier_id,item_id,location_id):
+def AddSupplier(supplier_id):
     if supplier_id != "supplier_id":
         print("adding the supplier id")
         print({"supplier":supplier_aggregate})
@@ -385,12 +262,9 @@ def AddSupplier(supplier_id,item_id,location_id):
             supplier = GetSupplierDetailsFromGraph(supplier_id)
             certifications = GetSupplierCertificationsFromGraph(supplier_id)
             locations = GetSupplierLocationsFromGraph(supplier_id)
-            inventory = GetSupplierInventoryFromGraph(supplier_id)
-            pricing = GetSupplierPricingFromGraph(supplier_id)
             finance = GetSupplierFinanceFromGraph(supplier_id)
             quality = GetSupplierQualityFromGraph(supplier_id)
             capabilities = GetSupplierCapabilitiesFromGraph(supplier_id)
-            shipping = GetSupplierShippingFromGraph(supplier_id)
 
             # Ensure the supplier exists before connecting various details
             if supplier:
@@ -398,18 +272,12 @@ def AddSupplier(supplier_id,item_id,location_id):
                     supplier.certifications.connect(certifications)
                 if locations:
                     supplier.locations.connect(locations)
-                if inventory:
-                    supplier.inventory.connect(inventory)
-                if pricing:
-                    supplier.pricing.connect(pricing)
                 if finance:
                     supplier.finance.connect(finance)
                 if quality:
                     supplier.quality.connect(quality)
                 if capabilities:
                     supplier.capabilities.connect(capabilities)
-                if shipping:
-                    supplier.shipping.connect(shipping)
 
                 logging.info(f"Supplier {supplier_id} added successfully.")
                 return json.dumps({"message": "Supplier added successfully"})

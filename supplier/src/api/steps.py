@@ -21,7 +21,7 @@ MODEL_NAME = os.getenv("MODEL_NAME")
 # Initialize Ollama model
 model = OllamaLLM(model=MODEL_NAME, temperature=0.0 , base_url= OLAMMA_BASE_URL)
 
-def create_supplier_nodes_in_knowledge_graph_helper(supplier_id,location_id,item_id):
+def create_supplier_nodes_in_knowledge_graph_helper(supplier_id):
     prompt_template = PromptTemplate(input_variables=["parameters"], template="""
         Human: 
         You are a system that aggregates data from multiple APIs and constructs a knowledge graph based on the retrieved information. To accomplish this, follow the steps outlined below:
@@ -35,37 +35,25 @@ def create_supplier_nodes_in_knowledge_graph_helper(supplier_id,location_id,item
         2. Retrieve Supplier Locations  
         - **Step:** 2  
         - **Action:** GetSupplierLocations (parameters: {parameters})
-
-        3. Retrieve Supplier Inventory  
-        - **Step:** 3  
-        - **Action:** GetSupplierInventory (parameters: {parameters})
-
-        4. Retrieve Supplier Pricing
-        - **Step:** 4  
-        - **Action:** GetSupplierPricing (parameters: {parameters})
                                     
-        5. Retrieve Supplier Finance
-        - **Step:** 5  
+        3. Retrieve Supplier Finance
+        - **Step:** 3  
         - **Action:** GetSupplierFinance (parameters: {parameters})
 
-        6. Retrieve Supplier Capabilities  
-        - **Step:** 6  
+        4. Retrieve Supplier Capabilities  
+        - **Step:** 4  
         - **Action:** GetSupplierCapabilities (parameters: {parameters})
                                     
-        7. Retrieve Supplier Certifications  
-        - **Step:** 7  
+        5. Retrieve Supplier Certifications  
+        - **Step:** 5  
         - **Action:** GetSupplierCertifications (parameters: {parameters})
                                     
-        8. Retrieve Supplier Quality  
-        - **Step:** 8  
+        6. Retrieve Supplier Quality  
+        - **Step:** 6  
         - **Action:** GetSupplierQuality (parameters: {parameters})
-                                    
-        9. Retrieve Supplier Shipping 
-        - **Step:** 9  
-        - **Action:** GetSupplierShipping (parameters: {parameters})                      
-                                        
-        10. Add Supplier
-        - **Step:** 10
+                                                               
+        7. Add Supplier
+        - **Step:** 7
         - **Action:** AddSupplier (parameters: {parameters}) 
                                         
 
@@ -95,7 +83,7 @@ def create_supplier_nodes_in_knowledge_graph_helper(supplier_id,location_id,item
     chain =  prompt_template | model
 
     #pass all params hereS
-    parameters_json = json.dumps({"supplier_id": supplier_id,"location_id":location_id,"item_id":item_id})
+    parameters_json = json.dumps({"supplier_id": supplier_id})
 
     query = {"parameters": parameters_json}
 

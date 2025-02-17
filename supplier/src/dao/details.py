@@ -1,10 +1,7 @@
 from neomodel import StructuredNode, StringProperty, BooleanProperty, IntegerProperty, FloatProperty, ArrayProperty
 from src.utils.graph import connection
-from src.dao.shipping import SupplierShipping
 from src.dao.quality import SupplierQuality
-from src.dao.inventory import SupplierInventory
 from src.dao.locations import SupplierLocation
-from src.dao.pricing import SupplierPricing
 from src.dao.finances import SupplierFinancials
 from src.dao.capablities import SupplierCapabilities
 from src.dao.certifications import SupplierCertifications
@@ -39,10 +36,7 @@ class SupplierDetails(StructuredNode):
     # Relationships
     certifications = connection.create_relationship_to('SupplierCertifications', 'HAS')
     locations = connection.create_relationship_to('SupplierLocation', 'HAS')
-    inventory = connection.create_relationship_to('SupplierInventory', 'HAS')
-    pricing = connection.create_relationship_to('SupplierPricing', 'HAS')
     finance = connection.create_relationship_to('SupplierFinancials', 'HAS')
     quality = connection.create_relationship_to('SupplierQuality', 'HAS')
     capabilities = connection.create_relationship_to('SupplierCapabilities', 'HAS')
-    shipping = connection.create_relationship_to('SupplierShipping', 'HAS')
 

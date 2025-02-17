@@ -3,10 +3,10 @@ from fastapi import FastAPI, HTTPException
 
 app = FastAPI()
 
-@app.get("/v1/supplier/{supplier_id}/locattion/{location_id}/item/{item_id}")
-def create_supplier_nodes_in_knowledge_graph(supplier_id: str,location_id: str,item_id):
+@app.get("/v1/supplier/{supplier_id}")
+def create_supplier_nodes_in_knowledge_graph(supplier_id: str):
     try:
-        create_supplier_nodes_in_knowledge_graph_helper(supplier_id,location_id,item_id)
+        create_supplier_nodes_in_knowledge_graph_helper(supplier_id)
         return {"message": "Supplier nodes created successfully"}
     except Exception as e:
         # Raise an HTTPException with a clear error message
