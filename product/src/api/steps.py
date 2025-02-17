@@ -20,7 +20,7 @@ MODEL_NAME = os.getenv("MODEL_NAME")
 # Initialize Ollama model
 model = OllamaLLM(model=MODEL_NAME, temperature=0.0 , base_url= OLAMMA_BASE_URL)
 
-def create_product_nodes_in_knowledge_graph_helper(product_id: str,location_id:str):
+def create_product_nodes_in_knowledge_graph_helper(product_id: str):
     prompt_template = PromptTemplate(input_variables=["parameters"], template="""
         Human: 
         You are a system that aggregates data from multiple APIs and constructs a knowledge graph based on the retrieved information. To accomplish this, follow the steps outlined below:
@@ -67,7 +67,7 @@ def create_product_nodes_in_knowledge_graph_helper(product_id: str,location_id:s
     chain =  prompt_template | model
         
     #pass all params hereS
-    parameters_json = json.dumps({"product_id": product_id,"location_id":location_id})
+    parameters_json = json.dumps({"product_id": product_id})
 
     query = {"parameters": parameters_json}
 

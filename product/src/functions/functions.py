@@ -21,13 +21,12 @@ Pricing = connection.create_node(ProductPricing)
 
 product_aggregate = {}
 
-def GetProductDetails(product_id,location_id):
+def GetProductDetails(product_id):
     print(product_id)
     if product_id != "product_id":
 
         response = get(f"{BASE_URL}/v1/product/details/{product_id}")
-        # https://product-api.happyfield-567241c8.westus2.azurecontainerapps.io/v1/product/details/PRD-001
-
+     
         print(response)
 
         # Step 1: Decode binary to string
@@ -41,10 +40,8 @@ def GetProductDetails(product_id,location_id):
 
         print(product_details_dict)
 
-def GetProductMetadata(product_id,location_id):
+def GetProductMetadata(product_id):
     if product_id != "product_id":
-        print(product_id,location_id)
-        print("get product metadata")
 
         response = get(f"{BASE_URL}/v1/product/metadata/{product_id}")
 
@@ -59,9 +56,8 @@ def GetProductMetadata(product_id,location_id):
 
         print(product_metadata_dict)
 
-def GetProductInventory(product_id,location_id):
+def GetProductInventory(product_id):
     if product_id != "product_id":
-        print(product_id,location_id)
         print("get the product inventory")
 
         response = get(f"{BASE_URL}/v1/product/inventory/{product_id}")
@@ -77,10 +73,8 @@ def GetProductInventory(product_id,location_id):
 
         print(product_inventory_dict)
 
-def GetProductPricing(product_id,location_id):
+def GetProductPricing(product_id):
     if product_id != "product_id":
-        print(product_id,location_id)
-        print("get the product pricing")
 
         response = get(f"{BASE_URL}/v1/product/pricing/{product_id}")
 
@@ -184,11 +178,10 @@ def publish_product():
     except Exception as e:
         print(f"Error publishing product data: {e}")
 
-def AddProduct(product_id,location_id):
+def AddProduct(product_id):
     if product_id != "product_id":
         print("Adding a new product...")
         publish_product()  # Publish event
-        print(location_id)
 
         # Retrieve existing product details, metadata, inventory, and pricing information
         product = GetProductDetailsFromGraph(product_id)
@@ -198,13 +191,13 @@ def AddProduct(product_id,location_id):
 
         # Retry if not exists
         if not product:
-            product = GetProductDetails(product_id,location_id)
+            product = GetProductDetails(product_id)
         if not metadata:
-            metadata = GetProductMetadata(product_id,location_id)
+            metadata = GetProductMetadata(product_id)
         if not inventory:
-            inventory = GetProductInventory(product_id,location_id)
+            inventory = GetProductInventory(product_id)
         if not pricing:
-            pricing = GetProductPricing(product_id,location_id)
+            pricing = GetProductPricing(product_id)
 
         # Connect relationships
         if product:
