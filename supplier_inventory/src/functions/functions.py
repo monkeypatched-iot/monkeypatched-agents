@@ -13,7 +13,7 @@ from src.utils.graph import connection
 
 load_dotenv()  # Load variables from .env
 
-SUPPLIER_BASE_URL = os.getenv("SUPPLIER_BASE_URL")
+SUPPLIER_BASE_URL= os.getenv("SUPPLIER_BASE_URL")
 BASE_URL = os.getenv("API_BASE_URL")
 
 component_inventory = []
@@ -122,6 +122,7 @@ def get_component_inventory(component_id, supplier_id):
                     if location_metadata.get("location_id") == location_id:
                         response = get(f"{BASE_URL}/v1/suppliers/inventory/{supplier_id}/locations/{location_id}/items/{component_id}")
                         supplier_inventory_dict = json.loads(response.content.decode("utf-8"))
+
                         component_inventory.append(supplier_inventory_dict)
 
         except Exception as e:
@@ -139,6 +140,7 @@ def get_component_inventory_metadata(component_id, supplier_id):
         for component in component_inventory:
                 # create node for the inventory
                 response = GetSupplierInventory(supplier_id)
+                print(response)
                 response[0]['current_stock'] =  component["quantity"]
                 update_supplier_inventory(response[0]["item_id"],supplier_id,response[0])
 
@@ -160,7 +162,7 @@ def add_inventory_notification(component_id, supplier_id):
     print(f"add_inventory_notification called with component_id: {component_id} and supplier_id: {supplier_id}")
     try:
         component_json = {"component": component_id,"supplier":supplier_id,"action":"inventory updated"}
-        asyncio.run(publish_event("component", component_json))
+        publish_event("component", component_json)
         print(f"Component Inventory  for {component_id}  retrived for supplier {supplier_id} .")
 
     except Exception as e:
