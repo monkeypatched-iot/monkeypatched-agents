@@ -12,6 +12,9 @@ def ExecuteQuery(query):
             # Run the query to match nodes with no relationships
             # Execute the query via the Neo4j connection
             result = connection.query(str(query))
+            if len(answers)>0:
+                answers.pop()
+
             answers.append({"answer":result[0][0]})
             print(answers)
         except Exception as e:
