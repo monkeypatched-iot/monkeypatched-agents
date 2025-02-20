@@ -1,159 +1,45 @@
+import asyncio
+import logging
 import os
-import boto3
-import gradio as gr
 from dotenv import load_dotenv
-from requests import post
-from langchain_ollama import OllamaLLM
+import gradio as gr
+from langchain_ollama.llms import OllamaLLM
+from langchain.prompts import PromptTemplate
 from langchain.prompts import ChatPromptTemplate
 
+from src.tools.nats import subscribe_event
+from src.tools.requests import post
 
-from src.functions.functions import handle_doc_type
-from src.functions.functions import handle_upload
-from src.functions.functions import handle_file_name
-from src.functions.functions import handle_id_value
-from src.functions.functions import handle_id_type
-from src.functions.functions import handle_status
-from src.functions.functions import handle_author
-from src.functions.functions import handle_doc_subtype
-from src.functions.functions import handle_tags
-from src.helpers.helper import check_substring
-from src.utils.constants import document_types, users
+load_dotenv()  # Load variables from .env
 
-# Load environment variables
-load_dotenv()
+logging.basicConfig(level=logging.INFO)
 
-# Retrieve environment variables
-S3_BUCKET = os.getenv("S3_BUCKET")
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-CSV_API_BASE_URL = os.getenv("CSV_API_BASE_URL")
-PDF_API_BASE_URL = os.getenv("PDF_API_BASE_URL")
-WORD_API_BASE_URL = os.getenv("WORD_API_BASE_URL")
-DOCUMENT_METADATA_API = os.getenv("DOCUMENT_METADATA_API")
+OLAMMA_BASE_URL = os.getenv("OLAMMA_BASE_URL")
+MODEL_NAME = os.getenv("MODEL_NAME")
+BASE_API_URL = os.getenv("BASE_API_URL")
 
-# Initialize AWS S3 Client
-s3_client = boto3.client(
-    "s3",
-    aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
-)
+def responder(message, history):
+    """Handles chatbot message and visibility of file upload."""
 
-# Initialize LLM Model
-model = OllamaLLM(model="deepseek-r1:1.5b", temperature=0.0)
+    print(message)
 
-# Session state tracking
-session_state = {}
-
-steps_state = ["intitate file upload"]
-
-# Generate LLM response
-def generate_completion(message):
-    """Uses LLM to generate a response."""
+     # Initialize Ollama model
+    model = OllamaLLM(model=MODEL_NAME, temperature=0.0 , base_url=OLAMMA_BASE_URL)
 
     response = model.invoke(ChatPromptTemplate.from_template("{message}").format(message=message))
 
-
     print("LLM Response:", response)
 
-    if message == "action:upload document": 
-        
-        # todo add more combinations here to enable the document upload
-
-        if check_substring(response, "attach files directly") or check_substring(response,"Okay, so I need to figure out how to upload a document.") or check_substring(response,"I can't directly upload documents.")  :
-            print("Substring found! Resetting session state.")
-            steps_state.append("intitate file upload")
-            return handle_doc_type(message,session_state)
-        else:
-            print("Substring not found.")
-            return response.content if hasattr(response, "content") else str(response)
-    elif message == "csv" :
-        prev = steps_state.pop()
-        if prev == "intitate file upload":
-            steps_state.append(message)
-            return handle_doc_subtype(message,session_state)
-        else:
-            print("Substring not found.")
-            return response.content if hasattr(response, "content") else str(response)
-    elif message in users :
-        # todo users must come from user api
-
-        prev = steps_state.pop()
-        if prev == "csv":
-            steps_state.append("author")
-            return handle_author(message,session_state)
-        else:
-            print("Substring not found.")
-            return response.content if hasattr(response, "content") else str(response)
-        
-
-    elif message in document_types:
-        prev = steps_state.pop()
-        if prev == "author":
-            steps_state.append("tags")
-            return handle_tags(message,session_state)
-        else:
-            print("Substring not found.")
-            return response.content if hasattr(response, "content") else str(response)
-        
-
-    elif message in ["draft","finalized","reviewed"]:
-        prev = steps_state.pop()
-        if prev == "tags":
-            steps_state.append("status")
-            return handle_status(message,session_state)
-        else:
-            print("Substring not found.")
-            return response.content if hasattr(response, "content") else str(response)
-        
-
-    elif message in ["product_id","cusomer_id","order_id","component_id","supplier_id"]: 
-
-        prev = steps_state.pop()
-        if prev == "status":
-            steps_state.append("id_type")
-            return handle_id_type(message,session_state)
-        else:
-            print("Substring not found.")
-            return response.content if hasattr(response, "content") else str(response)
-        
-    elif check_substring(message, "PRD") or check_substring(message, "CUST")  or check_substring(message, "ORD") or  check_substring(message, "PART") or check_substring(message, "SUP"): 
-
-        prev = steps_state.pop()
-        if prev == "id_type":
-            steps_state.append("id_value")
-            return handle_id_value(message,session_state)
-        else:
-            print("Substring not found.")
-            return response.content if hasattr(response, "content") else str(response)
-    elif check_substring(message, "/"):
-        prev = steps_state.pop()
-        if prev == "id_value":
-            print(session_state)
-            return handle_file_name(message,session_state)
-        else:
-            print("Substring not found.")
-            return response.content if hasattr(response, "content") else str(response)
-        
+    if "monkeypatched" in response:
+        print("Substring found!")
+        response.replace("hi monkeypatched", "")
+        response = post(BASE_API_URL,{"question":message})
+      
     else:
         print("Substring not found.")
-        return response.content if hasattr(response, "content") else str(response)
-
-def chatbot_response(message, history):
-    """Handles chatbot message and visibility of file upload."""
-    print(message)
-
-    # Generate chatbot response
-    response = generate_completion(message)
-
-    # Update chatbot history
-    history.append({"role": "user", "content": message})
-    history.append({"role": "assistant", "content": response})
-
-    print(session_state)
-    if "file_name" in session_state.keys() and session_state["file_name"] :
-        if session_state["doc_type"] == "action:upload document" and session_state["doc_subtype"] == "csv" :
-         handle_upload(session_state["file_name"],session_state)
-
+        # Update chatbot history
+        history.append({"role": "user", "content": message})
+        history.append({"role": "assistant", "content": response})
     return history
 
 # Custom CSS for styling
@@ -175,7 +61,7 @@ with gr.Blocks(css=custom_css) as app:
     chatbot = gr.Chatbot(elem_id="chatbot", type='messages')  # Set type to 'messages'
     msg_input = gr.Textbox(label="Type your message...")
     send_button = gr.Button("Send", elem_id="send-button")
-    send_button.click(chatbot_response, [msg_input, chatbot], chatbot)
-    upload_button = gr.File(label="Upload File", visible=False)  # Initially hidden
+    send_button.click(responder, [msg_input, chatbot], chatbot)
+    # upload_button = gr.File(label="Upload File", visible=False)  # Initially hidden
 
 app.launch(share=True)  # Optionally, set share=True for a public link

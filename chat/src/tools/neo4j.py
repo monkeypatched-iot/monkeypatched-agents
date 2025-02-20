@@ -1,3 +1,4 @@
+import re
 from neo4j import GraphDatabase
 from neomodel import config, StructuredNode,RelationshipTo,RelationshipFrom,db
 from src.utils.logger import logger
@@ -5,9 +6,10 @@ from src.utils.logger import logger
 # Create a connection to the Neo4j database
 class Neo4jGraphDB:
     def __init__(self, uri, user, password):
-        self._driver = GraphDatabase.driver(uri, auth=(user, password))
-        config.DATABASE_URL = f"bolt://{user}:{password}@localhost:7687"
-
+        self._driver = GraphDatabase.driver( uri, auth=(user, password))
+        match = re.search(r'//(\d+\.\d+\.\d+\.\d+)', uri)
+        ip_address =  match.group(1)
+        config.DATABASE_URL = f"bolt://{user}:{password}@{ip_address}:7687"
 
     def close(self):
         self._driver.close()
@@ -42,7 +44,7 @@ class Neo4jGraphDB:
     def add(self, node: StructuredNode):
         ''' Add data to a particular node, create if not exists, update if exists '''
         try:
-            # Check if node with the same unique identifier (e.g., customer_id) exists
+            # Check if node with the same unique identifier (e.g., item_id) exists
             existing_node = self._get_existing_node(node)
             
             if existing_node:
@@ -50,24 +52,24 @@ class Neo4jGraphDB:
                 for key, value in node.__dict__.items():
                     setattr(existing_node, key, value)
                 existing_node.save()  # Save updated node
-                logger.info(f"Node with {node.document_id} updated.")
+                logger.info(f"Node with {node.item_id} updated.")
                 return existing_node
             else:
                 # If node does not exist, create it
                 node.save()  # Create new node
-                logger.info(f"Node with {node.document_id} created.")
+                logger.info(f"Node with {node.item_id} created.")
                 return node
 
         except RuntimeError as e:
-            logger.error(f"Error adding data to node: {node.document_id}")
+            logger.error(f"Error adding data to node: {node.item_id}")
             logger.error(e)
             return None
 
     def _get_existing_node(self, node: StructuredNode):
         ''' Helper function to check if the node already exists based on unique identifier '''
         try:
-            # Replace customer_id with the actual unique identifier for your use case
-            return node.__class__.nodes.get(customer_id=node.document_id)
+            # Replace item_id with the actual unique identifier for your use case
+            return node.__class__.nodes.get(item_id=node.item_id)
         except node.__class__.DoesNotExist:
             return None
 

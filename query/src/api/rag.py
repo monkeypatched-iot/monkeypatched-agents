@@ -515,7 +515,10 @@ def ask_question_from_knowledge_graph_helper(question):
     chain = prompt_template | model
 
     # Invoke the chain with the Component_id parameter
-    response = chain.invoke({"question": question})   
+    try:
+        response = chain.invoke({"question": question})
+    except Exception as e :
+        print(e)   
 
     print(response)
 

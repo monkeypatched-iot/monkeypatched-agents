@@ -65,9 +65,8 @@ def create_component_nodes_in_knowledge_graph_helper(component_id):
     # Initialize Ollama model
     model = OllamaLLM(model=MODEL_NAME, temperature=0.0 , base_url= OLAMMA_BASE_URL)
 
-
     chain = prompt_template | model
-    
+
     #pass all params hereS
     parameters_json = json.dumps({"component_id": component_id})
 
