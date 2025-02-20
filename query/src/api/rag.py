@@ -13,7 +13,7 @@ import json
 import logging
 from neomodel import db
 
-from  src.api.steps import execute_query_for_knowledge_graph_helper
+from src.api.steps import execute_query_for_knowledge_graph_helper
 
 load_dotenv()  # Load variables from .env
 
@@ -26,270 +26,420 @@ def ask_question_from_knowledge_graph_helper(question):
 
     prompt_template = PromptTemplate(input_variables=["question"], template="""
     
+     
     human:
     You are neo4j expert that generates cypher queries from natural language  
 
-    You have access to a graph database with the following entities in it  
-        ComponentDetails 
-        ComponentPricing 
-        ComponentMetadata 
-        ComponentDetails 
-        ComponentInventory
-    represented by the neomodel below 
+  Entities and Their Fields:
 
-    class ComponentDetails(StructuredNode):
-        part_id = StringProperty(required=True)
-        part_name = StringProperty(required=True)
-        part_category = StringProperty(required=True)
-        part_type = StringProperty(required=True)
-        part_description = StringProperty(required=True)
-        hsn_code = StringProperty(required=True)
-        material_composition = StringProperty(required=True)
-        part_dimensions = StringProperty(required=True)
-        unit_of_measure = StringProperty(required=True)
-        weight = FloatProperty(required=True)
-        part_number = StringProperty(required=True)
-        batch_number = StringProperty(required=True)
-        quality_control_batch = StringProperty(required=True)
-        part_lifecycle_status = StringProperty(required=True)
-        part_testing_date = StringProperty(required=True)
-        part_testing_results = StringProperty(required=True)
-        part_warranty = StringProperty(required=True)
-        part_customization = BooleanProperty(required=True)
+    1. ComponentDetails:
+            part_id
+            part_name
+            part_category
+            part_type
+            part_description
+            hsn_code
+            material_composition
+            part_dimensions
+            unit_of_measure
+            weight
+            part_number
+            batch_number
+            quality_control_batch
+            part_lifecycle_status
+            part_testing_date
+            part_testing_results
+            part_warranty
+            part_customization
+            Relationships:
+                HAS_A to ComponentMetadata, ComponentInventory, ComponentPricing
 
-        metadata = connection.create_relationship_to('ComponentMetadata','HAS_A')
-        inventory =  connection.create_relationship_to('ComponentInventory','HAS_A')
-        pricing =  connection.create_relationship_to('ComponentPricing','HAS_A')
+    2. ComponentInventory:
+            part_id
+            available_stock
+            reorder_level
+            backorder_allowed
+            economic_order_quantity
+            reorder_point
+            safety_stock_level
+            inventory_turnover
+            stockout_rate
+            demand_forecast_accuracy
 
-    class ComponentInventory(StructuredNode):
-        part_id = StringProperty(required=True)
-        available_stock = IntegerProperty(required=True)
-        reorder_level = IntegerProperty(required=True)
-        backorder_allowed = BooleanProperty(required=True)
-        economic_order_quantity = FloatProperty(required=True)
-        reorder_point = IntegerProperty(required=True)
-        safety_stock_level = IntegerProperty(required=True)
-        inventory_turnover = FloatProperty(required=True)
-        stockout_rate = FloatProperty(required=True)
-        demand_forecast_accuracy = FloatProperty(required=True)
+    3. ComponentPricing:
+            part_id
+            unit_price
+            total_price
+            discount
+            net_price
+            tax_rate
+            tax_amount
+            final_price
 
-    class ComponentMetadata(StructuredNode):
-        part_id = StringProperty(required=True)
-        certification_details = StringProperty(required=True)
-        production_batch_id = StringProperty(required=True)
-        material_origin = StringProperty(required=True)
-        environmental_rating = StringProperty(required=True)
-        warranty_terms = StringProperty(required=True)
-        last_updated = StringProperty(required=True)
-        remarks = StringProperty(required=True)
+    4. SupplierDetails:
+            supplier_id
+            supplier_name
+            supplier_type
+            address
+            city
+            state_region
+            country
+            postal_code
+            contact_name
+            contact_email
+            contact_phone
+            website
+            tax_id
+            payment_terms
+            currency
+            lead_time_days
+            annual_spend
+            approval_status
+            risk_rating
+            certifications
+            industry
+            past_performance_score
+            preferred_supplier
+            last_order_date
+            Relationships:
+                HAS to SupplierCapabilities, SupplierCertifications, SupplierLocation, SupplierFinancials, SupplierQuality
 
-    class ComponentPricing(StructuredNode):
-        part_id = StringProperty(required=True)
-        unit_price = FloatProperty(required=True)
-        total_price = FloatProperty(required=True)
-        discount = StringProperty(required=True)
-        net_price = FloatProperty(required=True)
-        tax_rate = FloatProperty(required=True)
-        tax_amount = FloatProperty(required=True)
-        final_price = FloatProperty(required=True)     
+    5. SupplierCapabilities:
+            supplier_id
+            core_competencies
+            production_capacity
+            capacity_unit
+            lead_time
+            technology_capability
+            certifications
+            quality_control_measures
+            rad_capabilities
+            customization_capability
+            geographical_reach
+            material_expertise
+            sustainability_practices
+            subcontracting_capability
+            maintenance_services
+            packaging_capabilities
+            export_compliance
+            testing_facilities
+            automation_level
+            employee_count
+            partnership_initiatives
+            innovation_awards
+            remarks
 
-    Where the Component Details is linked to all other entities the structure of each of the entities is given by the pydantic models Below  
+    6. SupplierCertifications:
+            supplier_id
+            certification_name
+            certification_type
+            issuing_authority
+            certification_number
+            issue_date
+            expiry_date
+            renewal_required
+            renewal_frequency
+            scope_of_certification
+            audit_required
+            last_audit_date
+            next_audit_date
+            certification_status
+            certificate_document
+            remarks
 
-    Each of these components must have a supplier where the supplier entities are given below 
+    7. SupplierLocation:
+            supplier_id
+            item_id
+            location_id
+            location_name
+            address_line_1
+            address_line_2
+            city
+            state_province
+            country
+            postal_code
+            contact_number
+            email_address
+            facility_type
+            operational_hours
+            primary_function
+            geographical_coordinates
+            annual_production_capacity
+            employee_count
+            certifications
+            storage_capacity
+            key_contact_person
+            key_contact_role
+            remarks
 
-    SupplierCapabilities
-    SupplierCertifications
-    SupplierDetails
-    SupplierFinancials
-    SupplierLocation
-    SupplierQuality
-    SupplierShipping
+    8. SupplierQuality:
+            supplier_id
+            item_id
+            location_id
+            quality_rating
+            defect_rate
+            on_time_delivery_rate
+            return_rate
+            non_conformance_reports
+            iso_certifications
+            quality_audit_compliance_rate
+            inspection_pass_rate
+            warranty_claims_rate
+            supplier_quality_manager
+            corrective_action_turnaround_time
+            customer_complaint_rate
+            continuous_improvement_programs
+            last_quality_audit_date
+            next_quality_audit_date
+            inspection_process_details
+            first_pass_yield
+            material_traceability
+            adherence_to_specifications
+            remarks
 
-    described by the neo model given below 
+    9. SupplierShipping:
+            supplier_id
+            item_id
+            location_id
+            shipping_method
+            shipping_carrier
+            shipping_terms
+            origin_address
+            destination_address
+            average_transit_time_days
+            shipping_cost
+            shipping_currency
+            packaging_type
+            max_weight_per_shipment
+            max_volume_per_shipment
+            tracking_available
+            tracking_url
+            preferred_delivery_time
+            insurance_provided
+            insurance_coverage_amount
+            freight_class
+            customs_clearance_included
+            customs_documentation
+            last_shipping_date
+            remarks
 
+    10. OrderDetails:
+            order_id
+            order_date
+            order_status
+            order_type
+            priority_level
+            shipping_method
+            payment_method
+            Relationships:
+                HAS_A to OrderMetrics
+                HAS_A to OrderPayment
+                HAS_A to OrderShipping
 
-    class SupplierCapabilities(StructuredNode):
-        supplier_id = StringProperty(unique_index=True, required=True)
-        core_competencies = ArrayProperty(StringProperty(), required=True)
-        production_capacity = IntegerProperty(required=True)
-        capacity_unit = StringProperty(required=True)
-        lead_time = IntegerProperty(required=True)
-        technology_capability = ArrayProperty(StringProperty(), required=True)
-        certifications = ArrayProperty(StringProperty(), required=True)
-        quality_control_measures = StringProperty(required=True)
-        rad_capabilities = BooleanProperty(required=True)
-        customization_capability = BooleanProperty(required=True)
-        geographical_reach = ArrayProperty(StringProperty(), required=True)
-        material_expertise = ArrayProperty(StringProperty(), required=True)
-        sustainability_practices = StringProperty()
-        subcontracting_capability = BooleanProperty(required=True)
-        maintenance_services = BooleanProperty(required=True)
-        packaging_capabilities = StringProperty(required=True)
-        export_compliance = BooleanProperty(required=True)
-        testing_facilities = BooleanProperty(required=True)
-        automation_level = StringProperty(required=True)
-        employee_count = IntegerProperty(required=True)
-        partnership_initiatives = StringProperty()
-        innovation_awards = ArrayProperty(StringProperty())
-        remarks = StringProperty()
+    11. OrderMetadata:
+            order_id
+            customer_segment
+            sales_region
+            salesperson
+            sales_channel
+            customs_declaration_id
+            total_sales_value
+            discount_applied
+            net_sales_value
+            tax_amount
+            shipping_charges
+            total_revenue
+            commission_rate
+            commission_amount
+            promo_code_used
+            promo_code_value
+            upsell_or_cross_sell
+            refund_amount
 
-    class SupplierCertifications(StructuredNode):
-        supplier_id = StringProperty(required=True, unique_index=True)
-        certification_name = StringProperty(required=True)
-        certification_type = StringProperty(required=True)
-        issuing_authority = StringProperty(required=True)
-        certification_number = StringProperty()
-        issue_date = StringProperty(required=True)
-        expiry_date = StringProperty()
-        renewal_required = BooleanProperty(required=True)
-        renewal_frequency = StringProperty()
-        scope_of_certification = StringProperty(required=True)
-        audit_required = BooleanProperty(required=True)
-        last_audit_date = StringProperty()
-        next_audit_date = StringProperty()
-        certification_status = StringProperty(required=True)
-        certificate_document = StringProperty()
-        remarks = StringProperty()
-        
-    class SupplierDetails(StructuredNode):
-        supplier_id = StringProperty(required=True, unique_index=True)
-        supplier_name = StringProperty(required=True)
-        supplier_type = StringProperty(required=True)
-        address = StringProperty(required=True)
-        city = StringProperty(required=True)
-        state_region = StringProperty(required=True)
-        country = StringProperty(required=True)
-        postal_code = StringProperty(required=True)
-        contact_name = StringProperty(required=True)
-        contact_email = StringProperty(required=True)
-        contact_phone = StringProperty(required=True)
-        website = StringProperty()
-        tax_id = StringProperty(required=True)
-        payment_terms = StringProperty(required=True)
-        currency = StringProperty(required=True)
-        lead_time_days = IntegerProperty(required=True)
-        annual_spend = FloatProperty(required=True)
-        approval_status = StringProperty(required=True)
-        risk_rating = IntegerProperty(required=True)
-        certifications = ArrayProperty(StringProperty(), required=True)
-        industry = StringProperty(required=True)
-        past_performance_score = FloatProperty(required=True)
-        preferred_supplier = BooleanProperty(required=True)
-        last_order_date = StringProperty()
-        remarks = StringProperty()
+    12. OrderMetrics:
+            order_id
+            returns_exchanges_requested
+            backordered_items
+            shipping_tracking_number
+            order_fulfillment_location
+            customs_clearance_status
+            order_handling_time
+            shipping_status
+            order_delivery_time
+            customer_feedback_score
+            order_quality_rating
+            failed_delivery_attempts
+            damage_defect_rate
+            order_resolution_time
+            customer_service_interaction_count
+            order_accuracy_rate
+            late_shipment_rate
+            customer_loyalty_index
+            order_fulfillment_time
+            lead_time_variability
+            cycle_time_for_time_sensitive_orders
+            missed_priority_order_rate
+            backlogged_order_rate
+            critical_path_completion_rate
+            order_cycle_time
+            order_fill_rate
+            perfect_order_rate
 
-        # Relationships
-        certifications = connection.create_relationship_to('SupplierCertifications', 'HAS')
-        locations = connection.create_relationship_to('SupplierLocation', 'HAS')
-        finance = connection.create_relationship_to('SupplierFinancials', 'HAS')
-        quality = connection.create_relationship_to('SupplierQuality', 'HAS')
-        capabilities = connection.create_relationship_to('SupplierCapabilities', 'HAS')
-        
+    13. OrderPayment:
+            order_id
+            order_payment_status
+            payment_method
+            payment_terms
+            order_payment_due_date
+            payment_received_date
+            payment_amount
+            outstanding_payment_amount
+            payment_overdue_amount
+            early_payment_discount
+            late_payment_penalty
+            credit_limit_utilization
+            customer_payment_history
+            payment_dispute_status
+            payment_risk_rating
+            payment_processing_time
+            payment_approval_status
 
-    class SupplierFinancials(StructuredNode):
-        supplier_id = StringProperty(required=True, unique_index=True)
-        annual_revenue = FloatProperty(required=True)
-        currency = StringProperty(required=True)
-        net_profit_margin = FloatProperty(required=True)
-        operating_costs = FloatProperty(required=True)
-        debt_to_equity_ratio = FloatProperty(required=True)
-        credit_rating = StringProperty(required=True)
-        payment_terms = StringProperty(required=True)
-        outstanding_balance = FloatProperty(required=True)
-        overdue_invoices = IntegerProperty(required=True)
-        average_payment_delay_days = IntegerProperty(required=True)
-        financial_health_score = FloatProperty(required=True)
-        bank_name = StringProperty()
-        bank_account_number = StringProperty()
-        tax_identification_number = StringProperty()
-        audited_financials = BooleanProperty(required=True)
-        last_audit_date = StringProperty()
-        profitability_trends = StringProperty(required=True)
-        liquidity_ratio = FloatProperty(required=True)
-        payment_methods_accepted = ArrayProperty(StringProperty())
-        tax_compliance_status = BooleanProperty(required=True)
-        remarks = StringProperty()
-    from neomodel import StructuredNode, StringProperty, IntegerProperty, FloatProperty
+    14. OrderShipping:
+            order_id
+            shipping_id
+            shipping_address
+            shipping_date
+            expected_delivery_date
+            shipping_method
+            tracking_number
+            carrier_name
+            shipment_status
+            weight
+            shipping_cost
+            insurance_details
+            remarks
 
-    class SupplierLocation(StructuredNode):
-        supplier_id = StringProperty(required=True, unique_index=True)
-        item_id = StringProperty(required=True)
-        location_id = StringProperty(required=True, unique_index=True)
-        location_name = StringProperty(required=True)
-        address_line_1 = StringProperty(required=True)
-        address_line_2 = StringProperty()
-        city = StringProperty(required=True)
-        state_province = StringProperty(required=True)
-        country = StringProperty(required=True)
-        postal_code = StringProperty(required=True)
-        contact_number = StringProperty(required=True)
-        email_address = StringProperty(required=True)
-        facility_type = StringProperty(required=True)
-        operational_hours = StringProperty(required=True)
-        primary_function = StringProperty(required=True)
-        geographical_coordinates = StringProperty(required=True)
-        annual_production_capacity = IntegerProperty()
-        employee_count = IntegerProperty(required=True)
-        certifications = StringProperty()  # Convert list to a comma-separated string if needed
-        storage_capacity = FloatProperty()
-        key_contact_person = StringProperty(required=True)
-        key_contact_role = StringProperty(required=True)
-        remarks = StringProperty()
+    15. CustomerDetails:
+            uid
+            customer_id
+            company_name
+            contact_name
+            job_title
+            email_address
+            phone_number
+            mobile_number
+            billing_address
+            shipping_address
+            industry_type
+            company_size
+            preferred_communication_method
+            Relationships:
+                HAS_A to CustomerMetadata
+                HAS_A to CustomerOrderMetrics
+                HAS_A to CustomerPaymentData
 
-
-    class SupplierQuality(StructuredNode):
-        supplier_id = StringProperty(required=True)
-        item_id = StringProperty(required=True)
-        location_id = StringProperty(required=True)
-        quality_rating = FloatProperty(required=True)
-        defect_rate = FloatProperty(required=True)
-        on_time_delivery_rate = FloatProperty(required=True)
-        return_rate = FloatProperty(required=True)
-        non_conformance_reports = IntegerProperty(required=True)
-        iso_certifications = ArrayProperty(required=True)  # List of strings for ISO certifications
-        quality_audit_compliance_rate = FloatProperty(required=True)
-        inspection_pass_rate = FloatProperty(required=True)
-        warranty_claims_rate = FloatProperty(required=True)
-        supplier_quality_manager = StringProperty(required=True)
-        corrective_action_turnaround_time = IntegerProperty(required=True)
-        customer_complaint_rate = FloatProperty(required=True)
-        continuous_improvement_programs = BooleanProperty(required=True)
-        last_quality_audit_date = StringProperty(required=True)  # Store as ISO 8601 string
-        next_quality_audit_date = StringProperty(required=True)  # Store as ISO 8601 string
-        inspection_process_details = StringProperty()
-        first_pass_yield = FloatProperty(required=True)
-        material_traceability = BooleanProperty(required=True)
-        adherence_to_specifications = FloatProperty(required=True)
-        remarks = StringProperty()
-
-
-    class SupplierShipping(StructuredNode):
-        supplier_id = StringProperty(required=True)
-        item_id = StringProperty(required=True)
-        location_id = StringProperty(required=True)
-        shipping_method = StringProperty(required=True)
-        shipping_carrier = StringProperty(required=True)
-        shipping_terms = StringProperty(required=True)
-        origin_address = StringProperty(required=True)
-        destination_address = StringProperty(required=True)
-        average_transit_time_days = IntegerProperty(required=True)
-        shipping_cost = FloatProperty(required=True)
-        shipping_currency = StringProperty(required=True)
-        packaging_type = StringProperty(required=True)
-        max_weight_per_shipment = FloatProperty(required=True)
-        max_volume_per_shipment = FloatProperty(required=True)
-        tracking_available = BooleanProperty(required=True)
-        tracking_url = StringProperty()
-        preferred_delivery_time = StringProperty(required=True)
-        insurance_provided = BooleanProperty(required=True)
-        insurance_coverage_amount = FloatProperty()
-        freight_class = StringProperty()
-        customs_clearance_included = BooleanProperty(required=True)
-        customs_documentation = ArrayProperty(required=True)  # List of strings for required customs documentation
-        last_shipping_date = StringProperty()  # Store as ISO 8601 string
-        remarks = StringProperty()
+    16. CustomerMetadata:
+            customer_id
+            account_manager
+            special_requirements
+            warranty_information
+            support_contact
+            notes_comments
+            preferred_shipping_method
+            lead_time
+            region
+            account_status
+            customer_since
+            social_media_handles
+            shipping_contact_name
+            shipping_contact_number
                                      
-        here is an example goww ro do this 
+    17. CustomerOrderMetrics:
+
+            customer_id
+            profit_per_order
+            revenue_per_order
+            cost_to_serve_per_order
+            customer_lifetime_value
+            return_on_fulfillment_cost
+            gross_profit_margin
+            inventory_turnover_ratio
+            order_profitability_index
+            average_order_value
+            customer_retention_rate
+            order_fill_rate
+            on_time_delivery_rate
+            order_cycle_time
+            late_order_rate
+            perfect_order_rate
+            return_rate
+            backorder_rate
+            order_accuracy_rate
+            first_time_fill_rate
+            customer_satisfaction_score
+            order_margin_per_unit
+            cost_of_goods_sold
+            order_processing_time
+                                     
+    18. CustomerPaymentData:
+
+            customer_id
+            payment_terms
+            tax_identification_number
+            credit_limit
+            payment_method
+            currency
+                                     
+    19. ProductInventory:
+
+            product_id
+            available_stock
+            reorder_level
+            backorder_allowed
+            economic_order_quantity
+            reorder_point
+            safety_stock_level
+            inventory_turnover
+            stockout_rate
+            demand_forecast_accuracy
+    
+     20. ProductMetadata:
+
+            product_id
+            ce_certification
+            product_certifications
+            product_lifecycle_stage
+            product_warranty_coverage
+            release_date
+            product_lead_time
+            minimum_production_capacity
+            maximum_production_capacity
+            serial_number
+            part_number
+            batch_number
+            hsn_number
+            lot_number
+            production_date
+            expiration_date
+            quality_control_batch
+            manufacturing_location
+            product_testing_date
+            product_testing_results
+            customer_order_reference
+            shipment_tracking_number
+            return_exchange_reference
+            return_rate_for_product
+                                     
+    21. ProductPricing:
+
+            product_id
+            base_price
+            discount_rate
+            tax_rate
+            currency
+            effective_price
+                                     
+        here is an example to do this 
                                      
         Questtion : what is the part number for Steel Gear ?
         Answer : MATCH (c:ComponentDetails)
@@ -333,10 +483,11 @@ def ask_question_from_knowledge_graph_helper(question):
                    RETURN c
                 
                                                     
-        Response Format:  
-            return the response in the exact format below:
-                                                
-           <answer>
+        Please generate the response in the exact format below, ensuring no deviations in structure:
+
+        <answer>Your response here</answer>
+
+        Strictly adhere to this format without adding any extra text, explanations, or special characters.
 
     generate the cypher query to answer the {question} following the given examples guidelines  strictly
                                      
@@ -355,10 +506,7 @@ def ask_question_from_knowledge_graph_helper(question):
         - when asked about capablities use SupplierCapablities
         - when asked about supplier rename the edge as HAS strictly do not add any other text 
         - please return the answers in the correct cypher syntax
-        - also replace SupplierCapablities ith SupplierCapabilities
-        - always surround the answer with <answer></answer>
-                                     
-
+        - also replace SupplierCapablities ith SupplierCapabilities         
                                                            
     """)
 
@@ -369,10 +517,10 @@ def ask_question_from_knowledge_graph_helper(question):
     # Invoke the chain with the Component_id parameter
     response = chain.invoke({"question": question})   
 
-    # print(response)
+    print(response)
 
-    # Regex to extract text between <answer> and </answer>
     pattern = r'<answer>\s*(.*?)\s*</answer>'
+
 
     # Find all matches
     matches = re.findall(pattern, response, re.DOTALL)  # re.DOTALL allows . to match newlines
@@ -382,6 +530,9 @@ def ask_question_from_knowledge_graph_helper(question):
     for match in matches:
         print(match)
         execute_query_for_knowledge_graph_helper(match)
+   
+    
+    return True
    
     
     return True

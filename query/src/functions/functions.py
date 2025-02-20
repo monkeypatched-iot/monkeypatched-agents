@@ -13,7 +13,7 @@ def ExecuteQuery(query):
             # Execute the query via the Neo4j connection
             result = connection.query(str(query))
             answers.append({"answer":result[0][0]})
-            
+            print(answers)
         except Exception as e:
             print(f"Error occurred: {e}")
 
