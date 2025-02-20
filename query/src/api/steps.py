@@ -1,3 +1,5 @@
+# executes the cypher query and returns the reult back to chatbot
+
 import os
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -17,33 +19,20 @@ logging.basicConfig(level=logging.INFO)
 OLAMMA_BASE_URL = os.getenv("OLAMMA_BASE_URL")
 MODEL_NAME = os.getenv("MODEL_NAME")
 
-def create_component_nodes_in_knowledge_graph_helper(component_id):
+def execute_query_for_knowledge_graph_helper(query):
     prompt_template = PromptTemplate(input_variables=["parameters"], template="""
         Human: 
         You are a system that aggregates data from multiple APIs and constructs a knowledge graph based on the retrieved information. To accomplish this, follow the steps outlined below:
 
         Steps:
 
-        1️. Retrieve Component Details  
+        1️. Execute query 
         - **Step:** 1  
-        - **Action:** GetComponentDetails (parameters: {parameters})
-
-        2️. Retrieve Component Metadata  
-        - **Step:** 2  
-        - **Action:** GetComponentMetadata (parameters: {parameters})
-
-        3️. Retrieve Component Inventory  
-        - **Step:** 3  
-        - **Action:** GetComponentInventory (parameters: {parameters})
-
-        4️. Retrieve Component Payment Information  
-        - **Step:** 4  
-        - **Action:** GetComponentPaymentInformation (parameters: {parameters}) 
-                                        
-        5. Add a Component
-        - **Step:** 5 
-        - **Action:** AddComponent (parameters: {parameters}) 
-                                        
+        - **Action:** ExecuteQuery (parameters: {parameters})
+                                     
+        2. Notify
+        - **Step:** 2
+        - **Action:** NotifyBot (parameters: {parameters})
 
         Response Format:  
         For each step, return the response in the exact format below:
@@ -59,6 +48,7 @@ def create_component_nodes_in_knowledge_graph_helper(component_id):
         - Execute the steps sequentially.
         - Always return the same response
         - do not change the action names
+        -execute all steps in order and do not miss any steps
                                                                                     
         """)
     
@@ -67,14 +57,13 @@ def create_component_nodes_in_knowledge_graph_helper(component_id):
 
 
     chain = prompt_template | model
-    
-    #pass all params hereS
-    parameters_json = json.dumps({"component_id": component_id})
 
-    query = {"parameters": parameters_json}
+    data = {"query": str(query)}
+
+    print(query)
 
     # Invoke the chain with the Component_id parameter
-    response = chain.invoke(query)   
+    response = chain.invoke(json.dumps(data))   
 
     print(response)
 
@@ -117,18 +106,3 @@ def create_component_nodes_in_knowledge_graph_helper(component_id):
         else:
                 # Call function without parameters
                 print("Action key is missing!")
-
-def delete_orphan_nodes():
-    try:
-        # Run the query to match nodes with no relationships
-        query = """
-        MATCH (n)
-        WHERE NOT (n)-[]-()
-        DELETE n
-        """
-        # Execute the query via the Neo4j connection
-        db.cypher_query(query, {})
-        print("Orphan nodes deleted successfully.")
-    except Exception as e:
-        print(f"Error occurred: {e}")
-
