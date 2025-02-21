@@ -1,12 +1,16 @@
 import asyncio
+import json
 import logging
 import os
+import re
+import time
 from dotenv import load_dotenv
 import gradio as gr
 from langchain_ollama.llms import OllamaLLM
 from langchain.prompts import PromptTemplate
 from langchain.prompts import ChatPromptTemplate
 
+from src.tools.redis import RedisDB
 from src.tools.nats import subscribe_event
 from src.tools.requests import post
 
@@ -17,6 +21,8 @@ logging.basicConfig(level=logging.INFO)
 OLAMMA_BASE_URL = os.getenv("OLAMMA_BASE_URL")
 MODEL_NAME = os.getenv("MODEL_NAME")
 BASE_API_URL = os.getenv("BASE_API_URL")
+
+redis = RedisDB()
 
 def responder(message, history):
     """Handles chatbot message and visibility of file upload."""
@@ -30,16 +36,47 @@ def responder(message, history):
 
     print("LLM Response:", response)
 
-    if "monkeypatched" in response:
-        print("Substring found!")
-        response.replace("hi monkeypatched", "")
-        response = post(BASE_API_URL,{"question":message})
-      
+    if re.search(r"\bmonkeypatched\b", message, re.IGNORECASE):  
+        print("hold on let me think!")
+        response = re.sub(r"\bhi monkeypatched\b", "", message, flags=re.IGNORECASE)  # Case-insensitive replacement
+        response = post(BASE_API_URL, {"question": message})
+        time.sleep(5)
+
+        # cleaned_text = message.replace("hi monkeypatched", "").strip()
+        
+        data = redis.get(message)
+
+        
+            
+        if data is not None:
+            # Convert byte strings to regular strings
+            decoded_data = {key.decode(): value.decode() if isinstance(value, bytes) else value for key, value in data.items()}
+
+            print(decoded_data)
+
+            completion_data = json.loads(decoded_data['completion'])
+
+            # Extract the answer
+            answer = completion_data.get('answer')
+
+            # Output the answer
+            print(answer)
+            response = answer
+
+            if answer is None:
+               response = "answer not found" 
+
+        else:
+            response = "answer not found"
+
+ 
     else:
         print("Substring not found.")
-        # Update chatbot history
-        history.append({"role": "user", "content": message})
-        history.append({"role": "assistant", "content": response})
+
+    # Update chatbot history
+    history.append({"role": "user", "content": message})
+    history.append({"role": "assistant", "content": response})
+
     return history
 
 # Custom CSS for styling

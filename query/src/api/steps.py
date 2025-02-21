@@ -19,28 +19,29 @@ logging.basicConfig(level=logging.INFO)
 OLAMMA_BASE_URL = os.getenv("OLAMMA_BASE_URL")
 MODEL_NAME = os.getenv("MODEL_NAME")
 
-def execute_query_for_knowledge_graph_helper(query):
+def execute_query_for_knowledge_graph_helper(query,question):
+
     prompt_template = PromptTemplate(input_variables=["parameters"], template="""
         Human: 
         You are a system that aggregates data from multiple APIs and constructs a knowledge graph based on the retrieved information. To accomplish this, follow the steps outlined below:
 
-        Steps:
+     
+            ### Steps:
 
-        1️. Execute query 
-        - **Step:** 1  
-        - **Action:** ExecuteQuery (parameters: {parameters})
+            1️⃣ **Execute Query**
+            - **Step:** 1  
+            - **Action:** ExecuteQuery  
+            - **Parameters:** {parameters}  
+
+            2️⃣ **NotifyBot**
+            - **Step:** 2  
+            - **Action:** NotifyBot  
+            - **Parameters:** {parameters}  
+
+         ### **Response Format:**  
+            For **each step**, return the response as a **JSON string** in the exact format below:
+
                                      
-        2. Notify
-        - **Step:** 2
-        - **Action:** NotifyBot (parameters: {parameters})
-
-        Response Format:  
-        For each step, return the response in the exact format below:
-                                            
-        step: [Step Number]  
-        action: [Action Name] 
-        parameters: {parameters}
-
         Guidelines:  
         - Ensure each step is clearly labeled with "step:" and "action:" and "paramaters".
         - return answer as json string                                          
@@ -48,19 +49,19 @@ def execute_query_for_knowledge_graph_helper(query):
         - Execute the steps sequentially.
         - Always return the same response
         - do not change the action names
-        -execute all steps in order and do not miss any steps
+        - execute all steps in order 
+        
                                                                                     
         """)
     
     # Initialize Ollama model
     model = OllamaLLM(model=MODEL_NAME, temperature=0.0 , base_url= OLAMMA_BASE_URL)
 
-
     chain = prompt_template | model
 
-    data = {"query": str(query)}
+    data = {"query": str(query),"question":str(question)}
 
-    print(query)
+    print(data)
 
     # Invoke the chain with the Component_id parameter
     response = chain.invoke(json.dumps(data))   

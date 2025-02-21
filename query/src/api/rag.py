@@ -506,7 +506,8 @@ def ask_question_from_knowledge_graph_helper(question):
         - when asked about capablities use SupplierCapablities
         - when asked about supplier rename the edge as HAS strictly do not add any other text 
         - please return the answers in the correct cypher syntax
-        - also replace SupplierCapablities ith SupplierCapabilities         
+        - also replace SupplierCapablities ith SupplierCapabilities 
+                
                                                            
     """)
 
@@ -532,10 +533,7 @@ def ask_question_from_knowledge_graph_helper(question):
     # Print the matched content
     for match in matches:
         print(match)
-        execute_query_for_knowledge_graph_helper(match)
-   
-    
-    return True
+        execute_query_for_knowledge_graph_helper(match,question)
    
     
     return True
