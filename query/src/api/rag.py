@@ -480,7 +480,6 @@ def ask_question_from_knowledge_graph_helper(question):
         Question: hi monkeypatched what is the available_stock for component with part id PRT-001 ?
         Answer: MATCH (c:ComponentDetails)-[:HAS_A]->(i:ComponentInventory) WHERE c.part_id = 'PRT-001' RETURN i.available_stock
 
-
         Please generate the response in the exact format below, ensuring no deviations in structure:
 
         <answer>Your response here</answer>

@@ -1,0 +1,10 @@
+langchain
+neo4j
+neomodel
+requests
+python-dotenv
+uvicorn
+fastapi
+langchain_ollama
+nats-py
+redis
