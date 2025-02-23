@@ -441,48 +441,46 @@ def ask_question_from_knowledge_graph_helper(question):
                                      
         here is an example to do this 
                                      
-        Questtion : what is the part number for Steel Gear ?
+        Questtion : hi monkeypatched what is the part number for Steel Gear ?
         Answer : MATCH (c:ComponentDetails)
                 WHERE c.part_name = 'steel gear'
                 RETURN c.part_number
                                      
-        Question: what is the part id for Steel Gear?
+        Question: hi monkeypatched what is the part id for Steel Gear?
         Answer:MATCH (c:ComponentDetails)-[:HAS_A]->(m:ComponentMetadata)
                 WHERE c.part_name = 'Steel Gear'
                 RETURN c.part_id
                                      
-        Question: what suppliers provide for Steel Gear?
-        Answer: MATCH (c:ComponentDetails)-[:HAS_A]->(m:ComponentMetadata)
-                MATCH (s:SupplierDetails)-[:HAS_A]->(c)
-                WHERE c.part_name = 'Steel Gear'
-                RETURN s.supplier_name
-                                     
-        Question: what is my current inventory for Steel Gear?
+        Question: hi monkeypatched what is my current inventory for Steel Gear?
         Answer: MATCH (c:ComponentDetails)-[:HAS_A]->(i:ComponentInventory)
                 WHERE c.part_name = 'Steel Gear'
                 RETURN i.available_stock
                     
-        Question: what is the name of the supplier that suppliers Steel Gear?
-                  MATCH (c:ComponentDetails)-[:HAS_A]->(i:SupplierDetails)
+        Question: hi monkeypatched what is the name of the supplier that suppliers Steel Gear?
+        Answer: MATCH (c:ComponentDetails)-[:HAS_A]->(i:SupplierDetails)
                   RETURN i.supplier_name
                                      
-        Question: what is the location of the supplier?
-                  MATCH (s:SupplierDetails)-[:HAS]->(l:SupplierLocation)
+        Question: hi monkeypatched what is the location of the supplier with supllier id SUP-001?
+        Answer:   MATCH (s:SupplierDetails)-[:HAS]->(l:SupplierLocation)
                   WHERE s.supplier_id = 'SUP-001'
                   RETURN l.location_name
             
-        Question : what is the current stock at the location ?
-                MATCH (s:SupplierDetails)-[:HAS]->(l:SupplierLocation)
+        Question : hi monkeypatched what is the current stock at supplier SUP-001 for Item id ITEM-1234?
+        Answer: MATCH (s:SupplierDetails)-[:HAS]->(l:SupplierLocation)
                 MATCH (l:SupplierLocation) -[:HAS]->(i:SupplierInventory)
                 WHERE s.supplier_id = 'SUP-001' AND i.item_id = 'ITEM-1234'
                 RETURN i.current_stock
                                      
-        Question : what are the capablities of the supplier with id SUP-001
-                   MATCH (s:SupplierDetails)-[:HAS]->(c:SupplierCapabilities)
-                   WHERE s.supplier_id = 'SUP-001'
-                   RETURN c
-                
-                                                    
+        Question : hi monkeypatched what is the location of the supplier with id SUP-001?
+        Answer: MATCH (s:SupplierDetails)-[:HAS]->(l:SupplierLocation) WHERE s.supplier_id = 'SUP-001' RETURN l.location_name
+                                     
+        Question : hi monkeypatched what is the current inventory at location name Precision Engineering Factory ?
+        Answer: MATCH (l:SupplierLocation)-[:HAS]->(i:SupplierInventory) WHERE l.location_name = 'Precision Engineering Factory' RETURN i.current_stock
+        
+        Question: hi monkeypatched what is the available_stock for component with part id PRT-001 ?
+        Answer: MATCH (c:ComponentDetails)-[:HAS_A]->(i:ComponentInventory) WHERE c.part_id = 'PRT-001' RETURN i.available_stock
+
+
         Please generate the response in the exact format below, ensuring no deviations in structure:
 
         <answer>Your response here</answer>
@@ -507,8 +505,12 @@ def ask_question_from_knowledge_graph_helper(question):
         - when asked about supplier rename the edge as HAS strictly do not add any other text 
         - please return the answers in the correct cypher syntax
         - also replace SupplierCapablities ith SupplierCapabilities 
-                
-                                                           
+        - when answering questions about parts use Component entities
+        - when answering questions about part inventory use ComponentInventory
+        - when answering questions about supplier start with the SupplierDetails
+        - when answering questions about supplier inventory use SupplierInventory
+        - when answering questions about supplier inventory use item_id instead of part_id even when user is asking for part_id
+                                                     
     """)
 
     model = OllamaLLM(model=MODEL_NAME, temperature=0.1 , base_url= OLAMMA_BASE_URL)

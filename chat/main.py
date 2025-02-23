@@ -41,13 +41,9 @@ def responder(message, history):
         response = re.sub(r"\bhi monkeypatched\b", "", message, flags=re.IGNORECASE)  # Case-insensitive replacement
         response = post(BASE_API_URL, {"question": message})
         time.sleep(5)
-
-        # cleaned_text = message.replace("hi monkeypatched", "").strip()
-        
         data = redis.get(message)
+        print(data)
 
-        
-            
         if data is not None:
             # Convert byte strings to regular strings
             decoded_data = {key.decode(): value.decode() if isinstance(value, bytes) else value for key, value in data.items()}
@@ -61,7 +57,7 @@ def responder(message, history):
 
             # Output the answer
             print(answer)
-            response = answer
+            response = str(answer)
 
             if answer is None:
                response = "answer not found" 
@@ -72,6 +68,7 @@ def responder(message, history):
  
     else:
         print("Substring not found.")
+   
 
     # Update chatbot history
     history.append({"role": "user", "content": message})
@@ -87,7 +84,7 @@ custom_css = """
     .chatbot .user { background-color: #0a84ff; color: white; }
     .chatbot .ai { background-color: #3a3b44; }
     .gradio-button { background-color: #0a84ff; color: white; border-radius: 5px; margin-top: 10px; }
-    #logo {  background-color: red; border-width: 0px; display: block;width:100%;height:100%; margin:0px;}
+     #logo {  background-color: red; border-width: 0px; display: block;width:100%;height:100%; margin:0px;}
     .gradio-container > *:not(img) { margin-top: 20px; }  # Adds margin-top to all elements except the logo
     .svelte-dpdy90 { border: none;}
 """
