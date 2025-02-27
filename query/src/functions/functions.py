@@ -34,12 +34,18 @@ def NotifyBot(query,question):
 
             if match:
                 extracted_question = match.group(1)
-                redis.put(extracted_question,json.dumps(answers[0]),0)
-            
+                ttl_seconds = 3600  # 1 hour TTL
+
+                # Check if the key exists
+                if redis.get(extracted_question) is not None:
+                    redis.set(extracted_question, json.dumps(answers[0]), ex=ttl_seconds)  # Update with TTL
+                else:
+                    redis.set(extracted_question, json.dumps(answers[0]), ex=ttl_seconds)  # Insert with TTL
+
+                redis.expire(extracted_question, 3600)  # Set TTL if needed
 
             else:
                 print("No question found.")
-
 
         except Exception as e:
             print(f"An error occurred: {e}")

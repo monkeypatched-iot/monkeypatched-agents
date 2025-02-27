@@ -16,6 +16,8 @@ COPY . .
 # Expose the port that FastAPI will run on
 EXPOSE 7860
 
+ENV GRADIO_SERVER_NAME="0.0.0.0"
+
 # Command to run the application using uvicorn
 CMD ["python3", "main.py"]
 

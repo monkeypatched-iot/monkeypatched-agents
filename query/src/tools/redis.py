@@ -27,13 +27,13 @@ class RedisDB():
             logger.error('Cannot initialize Redis connection.')
             logger.error(e)
 
-    def put(self, prompt, completion, score):
+    def put(self, prompt, completion, score=0):
         ''' Adds the prompt, completion, and score to Redis without embedding '''
         try:
             objects = {"prompt": prompt, "completion": completion, "score": score}
             logger.info(f"Adding object {json.dumps(objects)} to Redis DB.")
             key = f"doc:{objects['prompt']}"
-            self.client.hmset(key, objects)  # Store as a hash in Redis
+            self.client.hset(key, mapping=objects)  # Store as a hash in Redis
             logger.info(f"Data for prompt '{prompt}' stored in Redis.")
         except RuntimeError as e:
             logger.error('Cannot store the data in Redis.')
@@ -70,3 +70,37 @@ class RedisDB():
             index = self.client.ft(INDEX_NAME).create_index(fields=schema, definition=definition)
             logger.info(f"Index {INDEX_NAME} created successfully.")
             return index
+
+    def set(self, prompt, completion, score=0, ex=None):
+        ''' Set prompt, completion, and score in Redis with optional TTL (expiration) '''
+        try:
+            objects = {"prompt": prompt, "completion": completion, "score": score}
+            logger.info(f"Setting object {json.dumps(objects)} in Redis DB with TTL {ex} seconds.")
+            key = f"doc:{objects['prompt']}"
+            self.client.hset(key, mapping=objects)  # Store as a hash in Redis
+            if ex:
+                self.client.expire(key, ex)  # Set the expiration time (TTL)
+            logger.info(f"Data for prompt '{prompt}' set in Redis with TTL.")
+        except RuntimeError as e:
+            logger.error('Cannot set the data in Redis with TTL.')
+            logger.error(e)
+
+    def delete(self, prompt):
+        ''' Deletes the prompt data from Redis '''
+        try:
+            key = f"doc:{prompt}"
+            self.client.delete(key)  # Delete the key from Redis
+            logger.info(f"Data for prompt '{prompt}' deleted from Redis.")
+        except RuntimeError as e:
+            logger.error('Cannot delete the data from Redis.')
+            logger.error(e)
+
+    def expire(self, prompt, ex):
+        ''' Sets the TTL (expiration) for an existing prompt in Redis '''
+        try:
+            key = f"doc:{prompt}"
+            self.client.expire(key, ex)  # Set the expiration time (TTL)
+            logger.info(f"TTL for prompt '{prompt}' set to {ex} seconds.")
+        except RuntimeError as e:
+            logger.error('Cannot set the TTL for the data in Redis.')
+            logger.error(e)

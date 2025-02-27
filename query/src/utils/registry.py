@@ -1,7 +1,6 @@
-from src.functions.functions import ExecuteQuery,NotifyBot
+from src.functions.functions import ExecuteQuery
 
 
 function_registry = {
-    "ExecuteQuery":ExecuteQuery,
-    "NotifyBot":NotifyBot
+    "ExecuteQuery":ExecuteQuery
 }

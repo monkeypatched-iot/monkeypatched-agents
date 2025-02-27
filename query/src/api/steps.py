@@ -33,14 +33,12 @@ def execute_query_for_knowledge_graph_helper(query,question):
             - **Action:** ExecuteQuery  
             - **Parameters:** {parameters}  
 
-            2️⃣ **NotifyBot**
-            - **Step:** 2  
-            - **Action:** NotifyBot  
-            - **Parameters:** {parameters}  
-
-         ### **Response Format:**  
-            For **each step**, return the response as a **JSON string** in the exact format below:
-
+        Response Format:  
+        For each step, return the response in the exact format below:
+                                            
+        step: [Step Number]  
+        action: [Action Name] 
+        parameters: {parameters}
                                      
         Guidelines:  
         - Ensure each step is clearly labeled with "step:" and "action:" and "paramaters".
@@ -69,7 +67,7 @@ def execute_query_for_knowledge_graph_helper(query,question):
     print(response)
 
     # Improved regex to correctly match standalone JSON objects
-    pattern = re.compile(r"\{(?:[^{}]|(?:\{[^{}]*\}))*\}", re.DOTALL)
+    pattern = re.compile(r'```json(.*?)```', re.DOTALL)
 
     # Extract valid JSON objects
     matches = pattern.findall(response)
