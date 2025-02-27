@@ -28,7 +28,7 @@ def execute_query_for_knowledge_graph_helper(query,question):
      
             ### Steps:
 
-            1️⃣ **Execute Query**
+            1️ **Execute Query**
             - **Step:** 1  
             - **Action:** ExecuteQuery  
             - **Parameters:** {parameters}  
@@ -58,8 +58,6 @@ def execute_query_for_knowledge_graph_helper(query,question):
     chain = prompt_template | model
 
     data = {"query": str(query),"question":str(question)}
-
-    print(data)
 
     # Invoke the chain with the Component_id parameter
     response = chain.invoke(json.dumps(data))   

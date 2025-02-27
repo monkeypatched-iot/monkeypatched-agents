@@ -69,7 +69,9 @@ def responder(message, history):
             
             res = post(BASE_API_URL, {"question": message})
             print(res.content.decode('utf-8'))
-            time.sleep(40)  # Give time for API to process
+
+            # delay required is too large - needs network optimizationn
+            time.sleep(60) 
 
             # Re-check Redis for the answer
             data = redis.get(message)
