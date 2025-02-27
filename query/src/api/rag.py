@@ -60,6 +60,7 @@ def ask_question_from_knowledge_graph_helper(question):
             logging.info("Using Open Router")
             formatted_prompt = prompt_template.format(entities=entities.entities, relationships=relationships.relationships, question=question)
             response = post_to_llm(formatted_prompt)
+            print(response)
             decoded_response = json.loads(response.content.decode('utf-8'))
             response_text = decoded_response["choices"][0]["message"]["content"]
             logging.info(response_text)

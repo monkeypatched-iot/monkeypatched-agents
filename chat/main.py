@@ -10,7 +10,7 @@ from langchain_ollama.llms import OllamaLLM
 from langchain.prompts import ChatPromptTemplate
 
 from src.tools.redis import RedisDB
-from src.tools.nats import subscribe_event
+from src.tools.nats import publish_event, subscribe_event, history_queue
 from src.tools.requests import post
 
 # Load environment variables
@@ -23,81 +23,35 @@ OLAMMA_BASE_URL = os.getenv("OLAMMA_BASE_URL")
 MODEL_NAME = os.getenv("MODEL_NAME")
 BASE_API_URL = os.getenv("BASE_API_URL")
 
+
+gradio_history = []
+
 redis = RedisDB()
-def responder(message, history):
-    """Handles chatbot responses and manages Redis cache."""
 
-    print(f"User message: {message}")
 
-    # Default response
-    response = "I couldn't understand that."
+# Function to get history from the queue and format for Gradio
+async def gradio_interface():
+    """Fetch history from the queue to display in Gradio."""
+    history = []
+    global history_queue
 
-    # Check if the message exists in Redis cache
-    data = redis.get(message)
-
-    if data is not None:
-        try:
-            # Convert byte keys and values to string
-            converted_data = {key.decode(): value.decode() for key, value in data.items()}
-            converted_data["completion"] = json.loads(converted_data["completion"])
-            # Extract answer and ensure it's a string
-            response = str(converted_data["completion"].get('answer', "answer not found"))
-            print(f"Cache hit: {response}")
-
-        except Exception as e:
-            print(f"Error processing Redis data: {e}")
-            response = "Error retrieving cached data."
+    # Fetch messages from the queue and return them
+    while not history_queue.empty():
+        role, content = await history_queue.get()
+        history.append(f"{role.capitalize()}: {content}")
     
-    else:
-        print("Cache miss: Generating response with LLM")
+    return "\n".join(history)
 
-        # Initialize Ollama model
-        model = OllamaLLM(model=MODEL_NAME, temperature=0.0, base_url=OLAMMA_BASE_URL)
-
-        try:
-            response = model.invoke(ChatPromptTemplate.from_template("{message}").format(message=message))
-            response = str(response)  # Ensure response is a string
-            print(f"LLM Response: {response}")
-
-        except Exception as e:
-            print(f"Error with LLM: {e}")
-            response = "I couldn't generate a response."
-
-        # If message contains "monkeypatched", fetch data from external API
-        if re.search(r"\bmonkeypatched\b", message, re.IGNORECASE):
-            print("Hold on, let me think!")
-            
-            res = post(BASE_API_URL, {"question": message})
-            print(res.content.decode('utf-8'))
-
-            # delay required is too large - needs network optimizationn
-            time.sleep(60) 
-
-            # Re-check Redis for the answer
-            data = redis.get(message)
-            print(data)
-
-            if data:
-                try:
-                    decoded_data = {key.decode(): value.decode() if isinstance(value, bytes) else value for key, value in data.items()}
-                    completion_data = json.loads(decoded_data['completion'])
-                    response = str(completion_data.get('answer', "answer not found"))  # Ensure response is a string
-                    print(f"API Retrieved Answer: {response}")
-
-                except Exception as e:
-                    print(f"Error processing API data: {e}")
-                    response = "Error retrieving API response."
-            else:
-                response = "answer not found"
-
-    # Ensure response is always a string
-    response = str(response)
-
-    # Update chatbot history
-    history.append({"role": "user", "content": message})
-    history.append({"role": "assistant", "content": response})
-
+async def responder(message, history):
+    await publish_event("messages", message)
+    user = await history_queue.get()
+    assistant = await history_queue.get()
+    print(assistant[1])
+    history.append({"role": "user", "content": user[1]})
+    history.append({"role": "assistant", "content": assistant[1]})
     return history
+   
+
 
 # Custom CSS for styling
 custom_css = """
@@ -121,4 +75,29 @@ with gr.Blocks(css=custom_css) as app:
     send_button = gr.Button("Send", elem_id="send-button")
     send_button.click(responder, [msg_input, chatbot], chatbot)
 
-app.launch(share=True)  # Set share=True for a public link if needed
+
+import time
+import asyncio
+import threading
+
+
+def blocking_func(event: threading.Event):
+    while not event.is_set():
+        asyncio.run(subscribe_event())
+
+
+# Start NATS listener and Gradio interface
+async def start_server():
+    """Run the NATS listener and Gradio interface simultaneously."""
+    print("here")
+    event = threading.Event()
+    asyncio.create_task(asyncio.to_thread(blocking_func, event))
+    await asyncio.sleep(5)
+
+
+
+async def main():
+    await start_server()
+    app.launch()
+
+asyncio.run(main())
