@@ -66,13 +66,14 @@ async def message_handler(msg):
                 await history_queue.put(("assistant", f"{response}"))
         else:
             message = f"{data}".replace('"','')
+            print(message)
             # Regex pattern to extract the answer value
-            pattern = r"{\s*answer\s*:\s*([\d\.]+)\s*}"
+            pattern = r"{\s*answer\s*:\s*([^}]+)\s*}"
 
             match = re.search(pattern, message)
-
+            print(match.group(1))
             if match:
-                answer = float(match.group(1))
+                answer = str(match.group(1))
                 print("Answer:", answer)
                 await history_queue.put(("assistant", f"{answer}"))
 
