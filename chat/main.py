@@ -1,17 +1,12 @@
 import asyncio
-import json
 import logging
 import os
-import re
-import time
+import asyncio
+import threading
 from dotenv import load_dotenv
 import gradio as gr
-from langchain_ollama.llms import OllamaLLM
-from langchain.prompts import ChatPromptTemplate
-
 from src.tools.redis import RedisDB
 from src.tools.nats import publish_event, subscribe_event, history_queue
-from src.tools.requests import post
 
 # Load environment variables
 load_dotenv()
@@ -46,12 +41,9 @@ async def responder(message, history):
     await publish_event("messages", message)
     user = await history_queue.get()
     assistant = await history_queue.get()
-    print(assistant[1])
     history.append({"role": "user", "content": user[1]})
     history.append({"role": "assistant", "content": assistant[1]})
     return history
-   
-
 
 # Custom CSS for styling
 custom_css = """
@@ -75,26 +67,16 @@ with gr.Blocks(css=custom_css) as app:
     send_button = gr.Button("Send", elem_id="send-button")
     send_button.click(responder, [msg_input, chatbot], chatbot)
 
-
-import time
-import asyncio
-import threading
-
-
 def blocking_func(event: threading.Event):
     while not event.is_set():
         asyncio.run(subscribe_event())
 
-
 # Start NATS listener and Gradio interface
 async def start_server():
     """Run the NATS listener and Gradio interface simultaneously."""
-    print("here")
     event = threading.Event()
     asyncio.create_task(asyncio.to_thread(blocking_func, event))
     await asyncio.sleep(5)
-
-
 
 async def main():
     await start_server()

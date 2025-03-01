@@ -50,7 +50,6 @@ async def message_handler(msg):
 
     subject = msg.subject
     data = msg.data.decode()
-    print(subject)
     try:
         if subject != "answers":
             response = model.invoke(ChatPromptTemplate.from_template("{message}").format(message=data))
@@ -69,9 +68,7 @@ async def message_handler(msg):
             print(message)
             # Regex pattern to extract the answer value
             pattern = r"{\s*answer\s*:\s*([^}]+)\s*}"
-
             match = re.search(pattern, message)
-            print(match.group(1))
             if match:
                 answer = str(match.group(1))
                 print("Answer:", answer)

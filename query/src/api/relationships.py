@@ -11,6 +11,7 @@ relationships = """
         HAS_A → OrderMetrics
         HAS_A → OrderPayment
         HAS_A → OrderShipping
+        HAS_A → OrderMetadata
 
    
 """

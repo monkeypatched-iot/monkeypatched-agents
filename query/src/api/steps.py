@@ -48,6 +48,7 @@ def execute_query_for_knowledge_graph_helper(query,question):
         - Always return the same response
         - do not change the action names
         - execute all steps in order 
+        - do not make any assumptions
         
                                                                                     
         """)

@@ -1,102 +1,59 @@
 prompt = """
-                Instruction: you are a tool to create a cypher queries given the nodes in a neo4j graph database and the relationship between them
-                the entities for the neo4j schema are defined as {entities}
-                and the relationships are defined as {relationships}
-                you are to convert questions asked to cypher queries that are compatible with neo4j
-                do not make any assumptions about the data strictly use the text above   
-                strictly use the entity names and field names as provided in the entities
-                think step by step how you will generate the query to answer the question asked given the above entities and relationships
-                do not make any assumptions 
-                do not generate a sql query  
-                and answer the given {question} only
-                for customer use customer_id as id
-                do not add  new line charachter in the query
-                please respond without using any newline characters (\n)
+  Task:Generate Cypher statement to query a graph database.
+  Instructions:
+  Use only the provided relationship types and properties in the schema.
+  Do not use any other relationship types or properties that are not provided.
+  Do not add new line charachter in the query
+  Never generate SQL query
+  Do not make any assumptions 
+  STRICTLY Look for the given field in the node that contains the field only for example industry type in CustomerDetails DO NOT look in CustomerMetdata
 
-                follow the below steps to construct the query 
-                   
-                the following fieds are in the CustomerDetails
-                   look for industry type in CustomerDetails
-                   look for company size in CustomerDetails
-                   look for job title in CustomerDetails
-                   look for preferred communication method in CustomerDetails
-                   look for billing address in CustomerDetails
-                   look for company name in CustomerDetails
-                   look for phone number in CustomerDetails
+  Schema Details (ESCAPED):
+  CustomerDetails: {{customer_id,company_size,job_title,phone_number,industry_type,billing_address,company_name,contact_name,email_address,mobile_number,preferred_communication_method,shipping_address,uid}}
+  CustomerMetadata: {{customer_id,account_manager,account_status,customer_since,lead_time,notes_comments,preferred_shipping_method,region,shipping_contact_name,shipping_contact_number,social_media_handles,special_requirements,support_contact,warranty_information}}
+  CustomerPaymentData: {{customer_id,credit_limit,currency,payment_method,payment_terms,tax_identification_number}}
+  CustomerOrderMetrics: {{customer_id,average_order_value,backorder_rate,cost_of_goods_sold,cost_to_serve_per_order,customer_lifetime_value,customer_retention_rate,customer_satisfaction_score,first_time_fill_rate,gross_profit_margin,inventory_turnover_ratio,late_order_rate,on_time_delivery_rate,order_accuracy_rate,order_cycle_time,order_fill_rate,order_margin_per_unit,order_processing_time,order_profitability_index,perfect_order_rate,profit_per_order,return_on_fulfillment_cost,return_rate,revenue_per_order}}
+  OrderDetails: {{order_date,order_id,order_status,order_type,payment_method,priority_level,shipping_method}}
+  OrderMetadata: {{order_id,commission_amount,commission_rate,customer_segment,customs_declaration_id,discount_applied,net_sales_value,promo_code_used,promo_code_value,refund_amount,sales_channel,sales_region,salesperson,shipping_charges,tax_amount,total_revenue,total_sales_value,upsell_or_cross_sell}}
+  OrderPayment: {{order_id,credit_limit_utilization,customer_payment_history,early_payment_discount,late_payment_penalty,order_payment_due_date,order_payment_status,outstanding_payment_amount,payment_amount,payment_approval_status,payment_dispute_status,payment_method,payment_overdue_amount,payment_processing_time,payment_received_date,payment_risk_rating,payment_terms}}
+  OrderShipping: {{order_id,carrier_name,expected_delivery_date,insurance_details,remarks,shipment_status,shipping_address,shipping_cost,shipping_date,shipping_id,shipping_method,tracking_number,weight}}
+  Relationships: 
+  - (CustomerDetails)-[:HAS_A]->(CustomerMetadata)
+  - (CustomerDetails)-[:HAS_A]->(CustomerPaymentData)
+  - (CustomerDetails)-[:HAS_A]->(CustomerOrderMetrics)
+  - (CustomerDetails)-[:HAS_MANY]->(OrderDetails)
+  - (OrderDetails)-[:HAS_A]->(OrderMetadata)
+  - (OrderDetails)-[:HAS_A]->(OrderPayment)
+  - (OrderDetails)-[:HAS_A]->(OrderShipping)
+  
+  Note: Do not include any explanations or apologies in your responses.
+  Do not respond to any questions that might ask anything else than for you to construct a Cypher statement.
+  Do not include any text except the generated Cypher statement.
 
-                the following fieds are in the CustomerMetadata where CustomerDetails HAS_A CustomerMetadata
-                   look for the account manager in CustomerMetadata
-                   look for the account status in CustomerMetadata
-                   look for the warranty information in CustomerMetadata
-                   look for the lead time in CustomerMetadata
-                   do not rename lead_time to product_lead_time
-                   look for preferred shipping method ins CustomerMetadata
 
-                when getting payment information make sure that a HAS_A relationship exists between CustomerDetails and CustomerPaymentData
-                   look for currency in CustomerPaymentData
-                   look for payment terms in CustomerPaymentData
-                   for credit limit look in the CustomerPaymentData
+  Return the response in the below response Format exactly:  
+    <answer>cypher query</answer>
 
-                when getting customer order metrics information make sure that a HAS_A relationship exists between CustomerDetails and CustomerOrderMetrics
-                   look for the average order value in the CustomerOrderMetrics
-                   look for the backorder rate in the CustomerOrderMetrics
-                   look for cost to serve per order in CustomerOrderMetrics
-                   look for customer lifetime value in CustomerOrderMetrics
-                   look for customer retention rate in CustomerOrderMetrics
-                   look for customer satisfaction rate CustomerOrderMetrics
-                   look for first time fill rate in CustomerOrderMetrics
-                   look for gross profit margin in CustomerOrderMetrics
-                   look for inventory turnover ratio in CustomerOrderMetrics
-                   look for late order rate in CustomerOrderMetrics
-                   look for order accuracy rate in CustomerOrderMetrics
-                   look for order cycle time in CustomerOrderMetrics
-                   look for order fill rate in CustomerOrderMetrics
-                   look for order margin per unit in CustomerOrderMetrics
-                   look for order processing in CustomerOrderMetrics
-                   look for order profitability index in CustomerOrderMetrics
-                   look for perfect order rate	in CustomerOrderMetrics
-                   look for profit per order in CustomerOrderMetrics
-                   look for return on fulfillment cost in CustomerOrderMetrics
-                   look for return rate	in CustomerOrderMetrics	
-                   look for revenue per order in CustomerOrderMetrics
-                   look for on time delivery rate in CustomerOrderMetrics
+  The question is:
+  {question}
 
-                   validate and correct the generated cypher query
-                   the arrow (`→`) symbol should be replaced with the correct relationship notation `-[]->`.
-                
+  Examples:
+  # Question: Company size for CUST12345?
+  <answer>MATCH (c:CustomerDetails) WHERE c.customer_id = 'CUST12345' RETURN c.company_size</answer>
 
-            Examples: Here are a few examples of generated Cypher statements for particular questions:
+  # Question:  account manager for customer with id CUST12345?
+  <answer>MATCH (customer:CustomerDetails)-[:HAS_A]->(metadata:CustomerMetadata) WHERE customer.customer_id = 'CUST12345' RETURN metadata.account_manager</answer>
 
-                # Question: Hi monkeypatched who is the account manager for customer with id CUST12345?
-                # Answer: MATCH (customer:CustomerDetails)-[:HAS_A]->(metadata:CustomerMetadata) WHERE customer.customer_id = 'CUST12345' RETURN metadata.account_manager
+  # Question: customer with id CUST12345 has been a customer since?
+  <answer>MATCH (customer:CustomerDetails)-[:HAS_A]->(metadata:CustomerMetadata) WHERE customer.customer_id = 'CUST12345' RETURN metadata.customer_since</answer>
 
-                # Question: Hi monkeypatched what is the preffered shipping method for customer with id CUST12345 ?
-                # Answer: MATCH (customer:CustomerDetails)-[:HAS_A]->(metadata:CustomerMetadata) WHERE customer.customer_id = 'CUST12345' RETURN metadata.account_manager
+  # Question: credit limit for CUST12345?
+  <answer>MATCH (c:CustomerDetails)-[:HAS_A]->(p:CustomerPaymentData) WHERE c.customer_id = 'ORD98765' RETURN p.credit_limit</answer>
 
-                # Question: Hi monkeypatched what is the company size for customer with id CUST12345 ?
-                # Answer: MATCH (customer:CustomerDetails) WHERE customer.customer_id = 'CUST12345' RETURN customer.company_size
+  # Question: average order value for CUST12345?
+  <answer>MATCH (c:CustomerDetails)-[:HAS_A]->(o:CustomerOrderMetrics) WHERE c.customer_id = 'CUST12345' RETURN o.average_order_value</answer>
 
-                # Question: Hi monkeypatched what is the company name for customer with id CUST12345 ?
-                # Answer: MATCH (customer:CustomerDetails) WHERE customer.customer_id = 'CUST12345' RETURN customer.company_name
+  # Question: order status for orde ORD98765
+  <answer>MATCH (order:OrderDetails) WHERE order.order_id = 'ORD98765' RETURN order.order_status</answer>
 
-                # Question: Hi monkeypatched what is the email address for Jhon Doe ?
-                # Answer: MATCH (c:CustomerDetails) WHERE c.contact_name = 'Jhon Doe' RETURN c.email_address
-
-                # Question: Hi monkeypatched what is the mobile number for customer with id CUST12345 ?
-                # Answer: MATCH (c:CustomerDetails) WHERE  c.customer_id ='CUST12345' RETURN c.mobile_number
-
-                # Question: Hi monkeypatched what is the phone number for customer with id CUST12345 ?
-                # Answer: MATCH (c:CustomerDetails) WHERE  c.customer_id ='CUST12345' RETURN c.phone_number
-
-                # Question: Hi monkeypatched what are the notes comments for customer with id CUST12345 ?
-                # Answer: MATCH (customer:CustomerDetails)-[:HAS_A]->(metadata:CustomerMetadata) WHERE customer.customer_id = 'CUST12345' RETURN m.notes_comments
-
-                # Question: hi monkeypatched what orders do we have for customer with id CUST12345 ?
-                # Answer: MATCH (customer:CustomerDetails)-[:HAS_MANY]->(order:OrderDetails) WHERE customer.customer_id = 'CUST12345' RETURN order.order_id
-
-                # Question: hi monkeypatched what are the payment terms for customer with customer id CUST12345
-                # Answer: MATCH (customer:CustomerDetails)-[:HAS_A]->(metadata:CustomerMetadata) WHERE customer.customer_id = 'CUST12345' RETURN m.payment_terms
-
-            Return the response in the below response Format exactly:  
-                <answer>cypher query</answer>
-        """
+"""
