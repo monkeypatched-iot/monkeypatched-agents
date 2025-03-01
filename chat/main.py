@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import asyncio
+import re
 import threading
 from dotenv import load_dotenv
 import gradio as gr
@@ -23,26 +24,21 @@ gradio_history = []
 
 redis = RedisDB()
 
-
-# Function to get history from the queue and format for Gradio
-async def gradio_interface():
-    """Fetch history from the queue to display in Gradio."""
-    history = []
-    global history_queue
-
-    # Fetch messages from the queue and return them
-    while not history_queue.empty():
-        role, content = await history_queue.get()
-        history.append(f"{role.capitalize()}: {content}")
+def clean_response(response):
+    # Remove <think> tags and everything inside them, including line breaks and spaces
+    cleaned_response = re.sub(r"<think>.*?</think>", "", response, flags=re.DOTALL)
     
-    return "\n".join(history)
+    # Remove leading/trailing whitespace if any
+    return cleaned_response.strip()
 
 async def responder(message, history):
     await publish_event("messages", message)
     user = await history_queue.get()
     assistant = await history_queue.get()
-    history.append({"role": "user", "content": user[1]})
-    history.append({"role": "assistant", "content": assistant[1]})
+    cleaned_response = clean_response(assistant[1])
+
+    history.append({"role": "user", "content": f'{message}'})
+    history.append({"role": "assistant", "content": f'{cleaned_response}'})
     return history
 
 # Custom CSS for styling

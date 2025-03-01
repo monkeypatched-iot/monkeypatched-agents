@@ -42,7 +42,7 @@ def execute_query_for_knowledge_graph_helper(query,question):
                                      
         Guidelines:  
         - Ensure each step is clearly labeled with "step:" and "action:" and "paramaters".
-        - return answer as json string                                          
+        - STRICTLY return answer as json string                                          
         - Maintain the given response structure for consistency.  
         - Execute the steps sequentially.
         - Always return the same response

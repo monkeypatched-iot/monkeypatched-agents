@@ -56,22 +56,22 @@ async def message_handler(msg):
             response = str(response)  # Ensure response is a string
             print(f"LLM Response: {response}")
             message = f"{data}".replace('"','')
-            await history_queue.put(("user", f"{data}".replace('"','')))
             # If message contains "monkeypatched", fetch data from external API
             if "monkeypatched" in message:
                 response = post(BASE_API_URL, {"question": f"{data}".replace('"','')})
                 message = response.content.decode("utf-8")
             else:
+                await history_queue.put(("user", f"{data}".replace('"','')))
                 await history_queue.put(("assistant", f"{response}"))
         else:
             message = f"{data}".replace('"','')
-            print(message)
             # Regex pattern to extract the answer value
             pattern = r"{\s*answer\s*:\s*([^}]+)\s*}"
             match = re.search(pattern, message)
             if match:
                 answer = str(match.group(1))
                 print("Answer:", answer)
+                await history_queue.put(("user", ""))
                 await history_queue.put(("assistant", f"{answer}"))
 
     except Exception as e:
