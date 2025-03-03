@@ -26,7 +26,8 @@ def create_customer_nodes_in_knowledge_graph_helper(customer_id:str):
     prompt_template = PromptTemplate(input_variables=["parameters"], template="""
     Human: 
     You are a system that aggregates data from multiple APIs and constructs a knowledge graph based on the retrieved information. To accomplish this, follow the steps outlined below:
-
+    STRICTLY return answer as json string 
+                                     
     Steps:
 
     1️. Retrieve Customer Details  
@@ -48,8 +49,6 @@ def create_customer_nodes_in_knowledge_graph_helper(customer_id:str):
     5. Add a customer
     - **Step:** 5 
     - **Action:** AddCustomer (parameters: {parameters}) 
-                                     
-
 
     Response Format:  
     For each step, return the response in the exact format below:
@@ -59,8 +58,7 @@ def create_customer_nodes_in_knowledge_graph_helper(customer_id:str):
     parameters: {parameters}
 
     Guidelines:  
-    - Ensure each step is clearly labeled with "step:" and "action:" and "paramaters".
-    - return answer as json string                                          
+    - Ensure each step is clearly labeled with "step:" and "action:" and "paramaters".                                         
     - Maintain the given response structure for consistency.  
     - Execute the steps sequentially.
     - Always return the same response
@@ -123,12 +121,6 @@ def create_customer_nodes_in_knowledge_graph_helper(customer_id:str):
             else:
                 # Otherwise pass them as positional arguments
                 result = invoke(function_name, *arguments)
-                    
-        else:
-            # Call function without parameters
-            function_name = step["action"]
-            result = invoke(function_name)
-            logging.info(f"Result from invoking {function_name} without parameters: {result}")
         
         # Function to delete orphan nodes
 def delete_orphan_nodes():
