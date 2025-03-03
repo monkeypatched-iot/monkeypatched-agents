@@ -9,14 +9,19 @@ load_dotenv()  # Load variables from .env
 
 NEO4J_URI = os.getenv("NEO4J_URI")
 
+def extract_ip(uri):
+    match = re.search(r'//([a-zA-Z0-9._-]+)', uri)  # Matches both IP and hostnames
+    if match:
+        return match.group(1)
+    else:
+        raise ValueError(f"Invalid URI: {uri}")
+
 # Create a connection to the Neo4j database
 class Neo4jGraphDB:
     def __init__(self, uri, user, password):
         self._driver = GraphDatabase.driver( uri, auth=(user, password))
-        match = re.search(r'//(\d+\.\d+\.\d+\.\d+)', uri)
-        ip_address =  match.group(1)
+        ip_address = extract_ip(uri)
         config.DATABASE_URL = config.DATABASE_URL = f"bolt://{user}:{password}@{ip_address}:7687"
-
 
     def close(self):
         self._driver.close()

@@ -5,10 +5,7 @@ Query  agent
 sudo docker build -t monkeypatched/chat-agent:latest . --no-cache
 
 # docker run
-sudo docker run  --network host -d -p 9017:9017 monkeypatched/chat-agent:latest
-
-# api docs
-http://localhost:9003/docs
+sudo docker run  --network host -d -p 7860:7860 monkeypatched/chat-agent:latest
 
 az login
 

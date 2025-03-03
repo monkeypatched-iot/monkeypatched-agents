@@ -32,6 +32,8 @@ def clean_response(response):
     return cleaned_response.strip()
 
 async def responder(message, history):
+    # todo add semantic cache
+    
     await publish_event("messages", message)
     user = await history_queue.get()
     assistant = await history_queue.get()
