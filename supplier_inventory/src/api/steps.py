@@ -14,9 +14,10 @@ load_dotenv()  # Load variables from .env
 
 logging.basicConfig(level=logging.INFO)
 
-OLAMMA_BASE_URL = os.getenv("OLAMMA_BASE_URL")
+OLAMMA_BASE_URL = str(os.getenv("OLAMMA_BASE_URL"))
 MODEL_NAME = os.getenv("MODEL_NAME")
 
+print(OLAMMA_BASE_URL)
 
 def create_inventory_nodes_in_knowledge_graph_helper(component_id,supplier_id):
    

@@ -2,7 +2,6 @@ import re
 from neo4j import GraphDatabase
 from neomodel import config, StructuredNode,RelationshipTo,RelationshipFrom,db
 from src.utils.logger import logger
-
 def extract_ip(uri):
     match = re.search(r'//([a-zA-Z0-9._-]+)', uri)  # Matches both IP and hostnames
     if match:
@@ -10,12 +9,19 @@ def extract_ip(uri):
     else:
         raise ValueError(f"Invalid URI: {uri}")
 
+def extract_port(uri):
+    match = re.search(r":(\d+)$", uri)
+    if match:
+        return match.group(1)
+    return None
+
 # Create a connection to the Neo4j database
 class Neo4jGraphDB:
     def __init__(self, uri, user, password):
         self._driver = GraphDatabase.driver( uri, auth=(user, password))
         ip_address = extract_ip(uri)
-        config.DATABASE_URL = config.DATABASE_URL = f"bolt://{user}:{password}@{ip_address}:7687"
+        port = extract_port(uri)
+        config.DATABASE_URL = config.DATABASE_URL = f"bolt://{user}:{password}@{ip_address}:{port}"
 
 
     def close(self):

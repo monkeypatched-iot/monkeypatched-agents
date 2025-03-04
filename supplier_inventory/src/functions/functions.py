@@ -114,16 +114,22 @@ def get_component_inventory(component_id, supplier_id):
 
             # Step 2: Convert string to JSON (Python dictionary)
             location_ids = json.loads(json_string)
+
+            print(location_ids)
             
             for location_id in location_ids:
                 location_node = GetSupplierLocationsFromGraph(supplier_id)
                 if location_node:
                     location_metadata = location_node.__dict__
+                    print(location_metadata.get("location_id"))
+                    print(location_ids)
                     if location_metadata.get("location_id") == location_id:
                         response = get(f"{BASE_URL}/v1/suppliers/inventory/{supplier_id}/locations/{location_id}/items/{component_id}")
+                        print(response)
+                        
                         supplier_inventory_dict = json.loads(response.content.decode("utf-8"))
-
                         component_inventory.append(supplier_inventory_dict)
+                        connection.add(SupplierInventory(supplier_inventory_dict))
 
         except Exception as e:
             logging.error(f"Error retrieving component inventory: {e}", exc_info=True)

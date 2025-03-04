@@ -13,7 +13,6 @@ from src.dao.customers.details import CustomerDetails
 
 load_dotenv()  # Load variables from .env
 
-BASE_URL = os.getenv("API_BASE_URL")
 BOM_BASE_URL = os.getenv("BOM_BASE_URL")
 
 

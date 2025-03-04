@@ -1,4 +1,5 @@
 from neomodel import StructuredNode, StringProperty, BooleanProperty, IntegerProperty, FloatProperty
+
 class SupplierInventory(StructuredNode):
     supplier_id = StringProperty(required=True, unique_index=True)
     item_id = StringProperty(required=True, unique_index=True)
