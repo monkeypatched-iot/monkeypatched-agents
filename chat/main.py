@@ -1,13 +1,20 @@
 import asyncio
 import logging
 import os
-import asyncio
+import random
 import re
 import threading
 from dotenv import load_dotenv
 import gradio as gr
+from langchain_ollama import OllamaEmbeddings
 from src.tools.redis import RedisDB
+from src.tools.qdrant import qdrant
 from src.tools.nats import publish_event, subscribe_event, history_queue
+from qdrant_client.models import PointStruct, VectorParams
+from qdrant_client.models import NamedVector
+import ollama
+from sentence_transformers import SentenceTransformer
+
 
 # Load environment variables
 load_dotenv()
@@ -19,6 +26,7 @@ OLAMMA_BASE_URL = os.getenv("OLAMMA_BASE_URL")
 MODEL_NAME = os.getenv("MODEL_NAME")
 BASE_API_URL = os.getenv("BASE_API_URL")
 
+QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION")
 
 gradio_history = []
 
@@ -31,16 +39,64 @@ def clean_response(response):
     # Remove leading/trailing whitespace if any
     return cleaned_response.strip()
 
-async def responder(message, history):
-    # todo add semantic cache
-    
-    await publish_event("messages", message)
-    user = await history_queue.get()
-    assistant = await history_queue.get()
-    cleaned_response = clean_response(assistant[1])
 
-    history.append({"role": "user", "content": f'{message}'})
-    history.append({"role": "assistant", "content": f'{cleaned_response}'})
+# Step 1: Generate embeddings from Ollama model
+def get_ollama_embedding(text: str) -> list:
+    # 1. Load a pretrained Sentence Transformer model
+    model = SentenceTransformer("all-MiniLM-L6-v2")
+
+    # The sentences to encode
+    sentences = [
+        text
+    ]
+
+    # 2. Calculate embeddings by calling model.encode()
+    return model.encode(sentences)
+
+async def responder(message, history):
+    # Get document embeddings for the user's message
+    message_embeddings = get_ollama_embedding(message)  # Expecting a list of embeddings
+
+    # Search Qdrant for the closest match
+    try:
+        # Perform search without specifying 'vector_name'
+        result = await asyncio.to_thread(qdrant.search, collection_name=QDRANT_COLLECTION, query_vector=message_embeddings[0], limit=1)
+        if result:
+  
+            point = result[0].payload
+            if point:
+                result_dict = point
+            else :
+                result_dict = result.__dict__
+                
+            cleaned_response = result_dict["answer"]
+            logging.info(f"Found result in Qdrant: {cleaned_response}")
+        else:
+            # If not found, publish the event and fetch assistant response
+            await publish_event("messages", message)
+            user = await history_queue.get()
+            assistant = await history_queue.get()
+            cleaned_response = clean_response(assistant[1])
+            # Prepare data for Qdrant insertion if not found
+            points = [
+                PointStruct(
+                    id=random.randint(1, 100),  # Generate a random ID
+                    vector=message_embeddings[0],  # Using the first vector (from the user's message)
+                    payload={"question": message, "answer": cleaned_response}
+                )
+            ]
+            
+            # Insert into Qdrant without specifying 'vector_name'
+            await asyncio.to_thread(qdrant.upsert, collection_name=QDRANT_COLLECTION, points=points)
+            
+    except Exception as e:
+        logging.error(f"Error during Qdrant search: {e}")
+        cleaned_response = "Sorry, an error occurred while processing your request."
+
+    # Update history with user and assistant messages
+    history.append({"role": "user", "content": message})
+    history.append({"role": "assistant", "content": cleaned_response})
+
     return history
 
 # Custom CSS for styling

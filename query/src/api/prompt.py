@@ -8,7 +8,7 @@ prompt = """
   Do not make any assumptions 
   Do not use uid in the queries
   Do not replace the lot number with batch number
-  STRICTLY Look for the given field in the node that contains the field only for example industry type in CustomerDetails DO NOT look in CustomerMetdata
+  STRICTLY Look for the given field in the node that contains the field only for example industry type in CustomerDetails DO NOT look in CustomerMetdata especially for CUST-1
   STRICLY look in pricing if thhe question is about product pricing
   STRICTLY use the product nodes if the product id is given
   STRICTLY use the component nodes if the component id is given
@@ -59,20 +59,23 @@ prompt = """
   {question}
 
   Examples:
-  # Question: Company size for CUST12345?
-  <answer>MATCH (c:CustomerDetails) WHERE c.customer_id = 'CUST12345' RETURN c.company_size</answer>
+  # Question: Company size for CUST-1?
+  <answer>MATCH (c:CustomerDetails) WHERE c.customer_id = 'CUST' RETURN c.company_size</answer>
 
-  # Question:  account manager for customer with id CUST12345?
-  <answer>MATCH (customer:CustomerDetails)-[:HAS_A]->(metadata:CustomerMetadata) WHERE customer.customer_id = 'CUST12345' RETURN metadata.account_manager</answer>
+  # Question: what is the industry type for CUST-1?
+  <answer>MATCH (c:CustomerDetails) WHERE c.customer_id = 'CUST-1' RETURN c.industry_type</answer>
 
-  # Question: customer with id CUST12345 has been a customer since?
-  <answer>MATCH (customer:CustomerDetails)-[:HAS_A]->(metadata:CustomerMetadata) WHERE customer.customer_id = 'CUST12345' RETURN metadata.customer_since</answer>
+  # Question:  account manager for customer with id CUST-1?
+  <answer>MATCH (customer:CustomerDetails)-[:HAS_A]->(metadata:CustomerMetadata) WHERE customer.customer_id = 'CUST-1' RETURN metadata.account_manager</answer>
 
-  # Question: credit limit for CUST12345?
+  # Question: customer with id CUST-1 has been a customer since?
+  <answer>MATCH (customer:CustomerDetails)-[:HAS_A]->(metadata:CustomerMetadata) WHERE customer.customer_id = 'CUST-1' RETURN metadata.customer_since</answer>
+
+  # Question: credit limit for CUST-1?
   <answer>MATCH (c:CustomerDetails)-[:HAS_A]->(p:CustomerPaymentData) WHERE c.customer_id = 'ORD98765' RETURN p.credit_limit</answer>
 
-  # Question: average order value for CUST12345?
-  <answer>MATCH (c:CustomerDetails)-[:HAS_A]->(o:CustomerOrderMetrics) WHERE c.customer_id = 'CUST12345' RETURN o.average_order_value</answer>
+  # Question: average order value for CUST-1?
+  <answer>MATCH (c:CustomerDetails)-[:HAS_A]->(o:CustomerOrderMetrics) WHERE c.customer_id = 'CUST-1' RETURN o.average_order_value</answer>
 
   # Question: order status for order ORD98765
   <answer>MATCH (order:OrderDetails) WHERE order.order_id = 'ORD98765' RETURN order.order_status</answer>
