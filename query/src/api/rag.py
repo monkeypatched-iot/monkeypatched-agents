@@ -9,6 +9,7 @@ from langchain.prompts import PromptTemplate
 from src.api import entities, relationships, prompt
 from src.tools.open_router import post_to_llm
 from src.api.steps import execute_query_for_knowledge_graph_helper
+from langchain.prompts import ChatPromptTemplate
 
 # Load environment variables
 load_dotenv()
@@ -17,15 +18,14 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 
 # Environment variables
-OLAMMA_BASE_URL = os.getenv("OLAMMA_BASE_URL")
-MODEL_NAME = os.getenv("MODEL_NAME")
-MODE = os.getenv("MODE")
+OLAMMA_BASE_URL = os.getenv("OLAMMA_BASE_URL", "http://localhost:5000")
+MODEL_NAME = os.getenv("MODEL_NAME", "default-model-name")
+MODE = os.getenv("MODE", "local")
 
 # Compile regex patterns
 ANSWER_PATTERN = re.compile(r'<answer>\s*(.*?)\s*</answer>', re.DOTALL)
 CYPHER_PATTERN = re.compile(r'cypher\n([\s\S]*?)\n', re.DOTALL)
 ANSWER_TEXT_PATTERN = re.compile(r'\*\*Answer\*\*\s*(.*?)\s*(?=(\*\*|$))', re.DOTALL)
-
 
 def extract_matches(response, patterns):
     for pattern in patterns:
@@ -33,7 +33,6 @@ def extract_matches(response, patterns):
         if matches:
             return matches
     return []
-
 
 def process_response(response, question):
     matches = extract_matches(response, [ANSWER_PATTERN, CYPHER_PATTERN, ANSWER_TEXT_PATTERN])
@@ -43,27 +42,63 @@ def process_response(response, question):
         logging.info(f"Executing match: {match}")
         execute_query_for_knowledge_graph_helper(match, question)
 
+def handle_local_model(question, prompt_template):
+    # Only proceed if 'monkeypatched' is in the question
+    model = OllamaLLM(model=MODEL_NAME, temperature=0.3, base_url=OLAMMA_BASE_URL)
+    if hasattr(question, 'question') and "monkeypatched" in str(question.question):
+        chain = prompt_template | model
+        logging.info(f"Using local model with question: {question.question}")
+        return chain.invoke({"entities": entities.entities, "relationships": relationships.relationships, "question": question.question})
+    else:
+        logging.info("Skipping local model due to absence of 'monkeypatched' in the question.")
+
+        # Define the chat prompt template
+        chat_prompt_template = ChatPromptTemplate.from_messages([
+            ("system", "You are a helpful assistant."),
+            ("user", "{question}"),  # Placeholder for the user's question
+            ("assistant", "Sure, here is the information you requested."),
+        ])
+
+        # Create a chain using the template and model
+        chain = chat_prompt_template | model
+
+        # Invoke the model with the formatted question
+        response = chain.invoke({"question": question.question})
+
+        return response
+
+
+def handle_open_router(question, prompt_template):
+    # Only proceed if 'monkeypatched' is in the question
+    if hasattr(question, 'question') and "monkeypatched" in str(question.question):
+        logging.info("Using Open Router for request")
+        formatted_prompt = prompt_template.format(entities=entities.entities, relationships=relationships.relationships, question=question)
+        response = post_to_llm(formatted_prompt)
+        return json.loads(response.content.decode('utf-8'))
+    else:
+        logging.info("Skipping Open Router due to absence of 'monkeypatched' in the question.")
+        return None
 
 def ask_question_from_knowledge_graph_helper(question):
-    prompt_template = PromptTemplate(
-        input_variables=["entities", "relationships", "question"],
-        template=prompt.prompt
-    )
+    prompt_template = PromptTemplate(input_variables=["entities", "relationships", "question"], template=prompt.prompt)
     try:
+        response = None
+        
         if MODE == "local":
-            model = OllamaLLM(model=MODEL_NAME, temperature=0.3, base_url=OLAMMA_BASE_URL)
-            chain = prompt_template | model
-            response = chain.invoke({"entities": entities.entities, "relationships": relationships.relationships, "question": question})
-            logging.info(response)
+            response = handle_local_model(question, prompt_template)
+        if not response:  # If no response from local model, try Open Router
+            response_data = handle_open_router(question, prompt_template)
+            if response_data:
+                response_text = response_data["choices"][0]["message"]["content"]
+                logging.info(f"Open Router response: {response_text}")
+                response = response_text
+        
+        if response:  # Process response if available
             process_response(response, question)
         else:
-            logging.info("Using Open Router")
-            formatted_prompt = prompt_template.format(entities=entities.entities, relationships=relationships.relationships, question=question)
-            response = post_to_llm(formatted_prompt)
-            print(response)
-            decoded_response = json.loads(response.content.decode('utf-8'))
-            response_text = decoded_response["choices"][0]["message"]["content"]
-            logging.info(response_text)
-            process_response(response_text, question)
+            logging.info("No response generated due to absence of 'monkeypatched' keyword.")
+    
     except Exception as e:
-        logging.error(f"Error occurred: {e}")
+        logging.error(f"Error occurred while processing question: {e}")
+
+
