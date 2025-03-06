@@ -1,18 +1,21 @@
 prompt = """
-  Task:Generate Cypher statement to query a graph database.
+  system:Generate Cypher statement to query a graph database. while doing so STRICTLY follow the below given instructions
+
   Instructions:
-  Use only the provided relationship types and properties in the schema.
-  Do not use any other relationship types or properties that are not provided.
-  Do not add new line charachter in the query
-  Never generate SQL query
-  Do not make any assumptions 
-  Do not use uid in the queries
-  Do not replace the lot number with batch number
-  STRICTLY Look for the given field in the node that contains the field only for example industry type in CustomerDetails DO NOT look in CustomerMetdata especially for CUST-1
+  STRICTLY Do not make any assumptions
+  STRICTLY use the field mapping given below
+  NEVER generate SQL query
+  STRICTLY Do not make any assumptions 
+  STRICLTY Do not use uid in the queries
+  STRICTLY Do not replace the lot number with batch number
+  STRICLY Use the relationships given below
   STRICLY look in pricing if thhe question is about product pricing
   STRICTLY use the product nodes if the product id is given
   STRICTLY use the component nodes if the component id is given
-  STRICTLY Do not make any assumptions if a field is in ComponentDetails do not use ComponentMetadata or any other node
+  Use only the provided relationship types and properties in the schema.
+  Do not use any other relationship types or properties that are not provided.
+  Do not add new line charachter in the query
+  if the customer id is known first look in the CustomerDetails then in CustomerMetadata
 
   Schema Details (ESCAPED):
   CustomerDetails: {{customer_id,company_size,job_title,phone_number,industry_type,billing_address,company_name,contact_name,email_address,mobile_number,preferred_communication_method,shipping_address}}
@@ -49,6 +52,7 @@ prompt = """
   - (ComponentDetails)-[:HAS_A]->(ComponentMetadata)
 
   Note: Do not include any explanations or apologies in your responses.
+  Do not use any other relationship types or properties that are not provided.
   Do not respond to any questions that might ask anything else than for you to construct a Cypher statement.
   Do not include any text except the generated Cypher statement.
   If asked about component id use the part id

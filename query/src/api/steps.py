@@ -22,7 +22,7 @@ MODEL_NAME = os.getenv("MODEL_NAME")
 def execute_query_for_knowledge_graph_helper(query,question):
 
     prompt_template = PromptTemplate(input_variables=["parameters"], template="""
-        Human: 
+        system: 
         You are a system that aggregates data from multiple APIs and constructs a knowledge graph based on the retrieved information. To accomplish this, follow the steps outlined below:
 
      
@@ -34,7 +34,7 @@ def execute_query_for_knowledge_graph_helper(query,question):
             - **Parameters:** {parameters}  
 
         Response Format:  
-        For each step, return the response in the exact format below:
+        For each step, return the response as a json in the exact format below:
                                             
         step: [Step Number]  
         action: [Action Name] 

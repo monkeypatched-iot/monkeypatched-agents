@@ -68,26 +68,29 @@ async def responder(message, history):
                 result_dict = point
             else :
                 result_dict = result.__dict__
+
+            if result_dict["question"] == message:
+                cleaned_response = result_dict["answer"]
+                logging.info(f"Found result in Qdrant: {cleaned_response}")
+            else:
+                # If not found, publish the event and fetch assistant response
+                await publish_event("messages", message)
+                user = await history_queue.get()
+                assistant = await history_queue.get()
+                cleaned_response = clean_response(assistant[1])
+                # Prepare data for Qdrant insertion if not found
+                points = [
+                    PointStruct(
+                        id=random.randint(1, 100),  # Generate a random ID
+                        vector=message_embeddings[0],  # Using the first vector (from the user's message)
+                        payload={"question": message, "answer": cleaned_response}
+                    )
+                ]
                 
-            cleaned_response = result_dict["answer"]
-            logging.info(f"Found result in Qdrant: {cleaned_response}")
+                # Insert into Qdrant without specifying 'vector_name'
+                await asyncio.to_thread(qdrant.upsert, collection_name=QDRANT_COLLECTION, points=points)
         else:
-            # If not found, publish the event and fetch assistant response
-            await publish_event("messages", message)
-            user = await history_queue.get()
-            assistant = await history_queue.get()
-            cleaned_response = clean_response(assistant[1])
-            # Prepare data for Qdrant insertion if not found
-            points = [
-                PointStruct(
-                    id=random.randint(1, 100),  # Generate a random ID
-                    vector=message_embeddings[0],  # Using the first vector (from the user's message)
-                    payload={"question": message, "answer": cleaned_response}
-                )
-            ]
-            
-            # Insert into Qdrant without specifying 'vector_name'
-            await asyncio.to_thread(qdrant.upsert, collection_name=QDRANT_COLLECTION, points=points)
+            cleaned_response = "Sorry, an error occurred while processing your request."
             
     except Exception as e:
         logging.error(f"Error during Qdrant search: {e}")
