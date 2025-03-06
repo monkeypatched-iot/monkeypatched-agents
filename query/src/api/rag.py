@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from neomodel import db
 from langchain_ollama.llms import OllamaLLM
 from langchain.prompts import PromptTemplate
-from src.api import entities, relationships, prompt
+from src.api import  prompt
 from src.tools.open_router import post_to_llm
 from src.api.steps import execute_query_for_knowledge_graph_helper
 from langchain.prompts import ChatPromptTemplate
@@ -48,7 +48,7 @@ def handle_local_model(question, prompt_template):
     if hasattr(question, 'question') and "monkeypatched" in str(question.question):
         chain = prompt_template | model
         logging.info(f"Using local model with question: {question.question}")
-        return chain.invoke({"entities": entities.entities, "relationships": relationships.relationships, "question": question.question})
+        return chain.invoke({"question": question.question})
     else:
         logging.info("Skipping local model due to absence of 'monkeypatched' in the question.")
 

@@ -69,12 +69,6 @@ prompt = """
   # Question: what is the industry type for CUST-1?
   <answer>MATCH (c:CustomerDetails) WHERE c.customer_id = 'CUST-1' RETURN c.industry_type</answer>
 
-  # Question:  account manager for customer with id CUST-1?
-  <answer>MATCH (customer:CustomerDetails)-[:HAS_A]->(metadata:CustomerMetadata) WHERE customer.customer_id = 'CUST-1' RETURN metadata.account_manager</answer>
-
-  # Question: customer with id CUST-1 has been a customer since?
-  <answer>MATCH (customer:CustomerDetails)-[:HAS_A]->(metadata:CustomerMetadata) WHERE customer.customer_id = 'CUST-1' RETURN metadata.customer_since</answer>
-
   # Question: credit limit for CUST-1?
   <answer>MATCH (c:CustomerDetails)-[:HAS_A]->(p:CustomerPaymentData) WHERE c.customer_id = 'ORD98765' RETURN p.credit_limit</answer>
 

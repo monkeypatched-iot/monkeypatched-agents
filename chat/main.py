@@ -96,9 +96,13 @@ async def responder(message, history):
         logging.error(f"Error during Qdrant search: {e}")
         cleaned_response = "Sorry, an error occurred while processing your request."
 
-    # Update history with user and assistant messages
     history.append({"role": "user", "content": message})
-    history.append({"role": "assistant", "content": cleaned_response})
+    if cleaned_response is not None:
+        # Update history with user and assistant messages
+        history.append({"role": "assistant", "content": cleaned_response})
+    else:
+        cleaned_response = "Sorry, an error occurred while processing your request."
+        history.append({"role": "assistant", "content": cleaned_response})
 
     return history
 
