@@ -16,7 +16,7 @@ prompt = """
   Do not use any other relationship types or properties that are not provided.
   Do not add new line charachter in the query
   if the customer id is known first look in the CustomerDetails then in CustomerMetadata
-
+  
   Schema Details (ESCAPED):
   CustomerDetails: {{customer_id,company_size,job_title,phone_number,industry_type,billing_address,company_name,contact_name,email_address,mobile_number,preferred_communication_method,shipping_address}}
   CustomerMetadata: {{customer_id,account_manager,account_status,customer_since,lead_time,notes_comments,preferred_shipping_method,region,shipping_contact_name,shipping_contact_number,social_media_handles,special_requirements,support_contact,warranty_information}}
@@ -56,6 +56,7 @@ prompt = """
   Do not respond to any questions that might ask anything else than for you to construct a Cypher statement.
   Do not include any text except the generated Cypher statement.
   If asked about component id use the part id
+  if asked about email use email_address
   Return the response in the below response Format exactly:  
     <answer>cypher query</answer>
 
