@@ -72,7 +72,7 @@ def handle_open_router(question, prompt_template):
     # Only proceed if 'monkeypatched' is in the question
     if hasattr(question, 'question') and "monkeypatched" in str(question.question):
         logging.info("Using Open Router for request")
-        formatted_prompt = prompt_template.format(entities=entities.entities, relationships=relationships.relationships, question=question)
+        formatted_prompt = prompt_template.format(question=question)
         response = post_to_llm(formatted_prompt)
         return json.loads(response.content.decode('utf-8'))
     else:
