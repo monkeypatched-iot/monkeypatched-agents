@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import os
 import re
 from dotenv import load_dotenv
@@ -9,12 +10,17 @@ from langchain.prompts import ChatPromptTemplate
 
 from src.tools.requests import post
 
+from src.tools.open_router import post_to_llm
+
 load_dotenv()  # Load variables from .env
+
+logging.basicConfig(level=logging.INFO)
 
 NATS_SERVER_URL = os.getenv("NATS_SERVER_URL", "nats://localhost:4222")  # Default fallback
 OLAMMA_BASE_URL = os.getenv("OLAMMA_BASE_URL")
 MODEL_NAME = os.getenv("MODEL_NAME")
 BASE_API_URL = os.getenv("BASE_API_URL")
+MODE = os.getenv("MODE", "local")
 
 gradio_history = []
 
@@ -40,6 +46,16 @@ async def publish_event(subject, message):
     finally:
         await nc.close()
 
+def handle_open_router(message):
+    # Only proceed if 'monkeypatched' is in the question
+    if message:
+        print(message)
+        logging.info("Using Open Router for request")
+        response = post_to_llm(message)
+        return json.loads(response.content.decode('utf-8'))
+    else:
+        logging.info("Error occured executing the query")
+        return None
 
 async def message_handler(msg):
     """Callback function to process received messages."""
@@ -52,17 +68,34 @@ async def message_handler(msg):
     data = msg.data.decode()
     try:
         if subject != "answers":
-            response = model.invoke(ChatPromptTemplate.from_template("{message}").format(message=data))
-            response = str(response)  # Ensure response is a string
-            print(f"LLM Response: {response}")
-            message = f"{data}".replace('"','')
-            # If message contains "monkeypatched", fetch data from external API
-            if "monkeypatched" in message:
-                response = post(BASE_API_URL, {"question": f"{data}".replace('"','')})
-                message = response.content.decode("utf-8")
+            response = None
+            message = None
+
+            if MODE == "local":
+                response = model.invoke(ChatPromptTemplate.from_template("{message}").format(message=data))
+                response = str(response)  # Ensure response is a string
+                print(f"LLM Response: {response}")
+                message = f"{data}".replace('"','')
+                # If message contains "monkeypatched", fetch data from external API
+                if "monkeypatched" in message:
+                    response = post(BASE_API_URL, {"question": f"{data}".replace('"','')})
+                    message = response.content.decode("utf-8")
+                else:
+                    await history_queue.put(("user", f"{data}".replace('"','')))
+                    await history_queue.put(("assistant", f"{response}"))
             else:
-                await history_queue.put(("user", f"{data}".replace('"','')))
-                await history_queue.put(("assistant", f"{response}"))
+                result = handle_open_router(data)
+                response = str(result)  # Ensure response is a string
+                print(f"LLM Response: {response}")
+                message = f"{data}".replace('"','')
+                if "monkeypatched" in message:
+                    response = post(BASE_API_URL, {"question": f"{data}".replace('"','')})
+                    message = response.content.decode("utf-8")
+                else:
+                    await history_queue.put(("user", f"{data}".replace('"','')))
+                    await history_queue.put(("assistant", f"{response}"))
+
+            
         else:
             message = f"{data}".replace('"','')
             # Regex pattern to extract the answer value
