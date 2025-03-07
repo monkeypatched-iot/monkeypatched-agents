@@ -20,9 +20,10 @@ def ExecuteQuery(query,question):
             result = connection.query(str(query))
             if len(answers)>0:
                 answers.pop()
-            answers.append({"answer":result[0][0]})
-            print(answers)
-            NotifyBot(query,question)
+            if result[0][0] is not None:
+                answers.append({"answer":result[0][0]})
+                print(answers)
+                NotifyBot(query,question)
         except Exception as e:
             print(f"Error occurred: {e}")
 

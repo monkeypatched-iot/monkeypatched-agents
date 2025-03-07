@@ -89,6 +89,7 @@ async def responder(message, history):
                 
                 # Insert into Qdrant without specifying 'vector_name'
                 await asyncio.to_thread(qdrant.upsert, collection_name=QDRANT_COLLECTION, points=points)
+                history.append({"role": "assistant", "content": cleaned_response})
         else:
             cleaned_response = "Sorry, an error occurred while processing your request."
             

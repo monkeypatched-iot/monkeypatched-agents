@@ -12,11 +12,12 @@ prompt = """
   STRICLY look in pricing if thhe question is about product pricing
   STRICTLY use the product nodes if the product id is given
   STRICTLY use the component nodes if the component id is given
+  STRICLY follow the schema
   Use only the provided relationship types and properties in the schema.
   Do not use any other relationship types or properties that are not provided.
   Do not add new line charachter in the query
-  if the customer id is known first look in the CustomerDetails then in CustomerMetadata
-  
+  Do not look for payment terms in CustomerDetails
+ 
   Schema Details (ESCAPED):
   CustomerDetails: {{customer_id,company_size,job_title,phone_number,industry_type,billing_address,company_name,contact_name,email_address,mobile_number,preferred_communication_method,shipping_address}}
   CustomerMetadata: {{customer_id,account_manager,account_status,customer_since,lead_time,notes_comments,preferred_shipping_method,region,shipping_contact_name,shipping_contact_number,social_media_handles,special_requirements,support_contact,warranty_information}}
@@ -70,11 +71,20 @@ prompt = """
   # Question: what is the industry type for CUST-1?
   <answer>MATCH (c:CustomerDetails) WHERE c.customer_id = 'CUST-1' RETURN c.industry_type</answer>
 
+  # Question: who is the account manager for CUST-1?
+  <answer>MATCH (c:CustomerDetails)-[:HAS_A]->(p:CustomerMetadata) WHERE c.customer_id = 'CUST-1' RETURN p.account_manager</answer>
+
+  # Question: what notes comments are there for CUST-1?
+  <answer>MATCH (c:CustomerDetails)-[:HAS_A]->(p:CustomerMetadata) WHERE c.customer_id = 'CUST-1' RETURN p.notes_comments</answer>
+
   # Question: credit limit for CUST-1?
   <answer>MATCH (c:CustomerDetails)-[:HAS_A]->(p:CustomerPaymentData) WHERE c.customer_id = 'ORD98765' RETURN p.credit_limit</answer>
 
   # Question: average order value for CUST-1?
   <answer>MATCH (c:CustomerDetails)-[:HAS_A]->(o:CustomerOrderMetrics) WHERE c.customer_id = 'CUST-1' RETURN o.average_order_value</answer>
+
+    # Question: average order value for CUST-1?
+  <answer>MATCH (c:CustomerDetails)-[:HAS_A]->(o:CustomerOrderMetrics) WHERE c.customer_id = 'CUST-1' RETURN o.customer_lifetime_value</answer>
 
   # Question: order status for order ORD98765
   <answer>MATCH (order:OrderDetails) WHERE order.order_id = 'ORD98765' RETURN order.order_status</answer>
