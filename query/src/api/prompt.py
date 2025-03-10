@@ -125,4 +125,8 @@ prompt = """
   # Question: get the part warranty for component ?
   <answer>MATCH (p:ComponentDetails) WHERE p.part_id = 'PART_ID' RETURN p.part_warranty</answer>
 
+
+  # Question: get the sales region for order?
+  <answer><answer>MATCH (o:OrderDetails)-[:HAS_A]->(m:OrderMetadata) WHERE o.order_id = 'ORD-1' RETURN m.sales_region</answer>
+
 """

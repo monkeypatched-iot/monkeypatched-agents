@@ -75,6 +75,7 @@ async def message_handler(msg):
                 response = model.invoke(ChatPromptTemplate.from_template("{message}").format(message=data))
                 response = str(response)  # Ensure response is a string
                 print(f"LLM Response: {response}")
+
                 message = f"{data}".replace('"','')
                 # If message contains "monkeypatched", fetch data from external API
                 if "monkeypatched" in message:
@@ -90,8 +91,9 @@ async def message_handler(msg):
                 message = f"{data}".replace('"','')
                 if "monkeypatched" in message:
                     response = post(BASE_API_URL, {"question": f"{data}".replace('"','')})
-                    message = response.content.decode("utf-8")
+                    message = response.json()["choices"][0]["message"]["content"]
                 else:
+                    response = response.json()["choices"][0]["message"]["content"]
                     await history_queue.put(("user", f"{data}".replace('"','')))
                     await history_queue.put(("assistant", f"{response}"))
 

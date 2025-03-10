@@ -36,6 +36,9 @@ def extract_matches(response, patterns):
 
 def process_response(response, question):
     matches = extract_matches(response, [ANSWER_PATTERN, CYPHER_PATTERN, ANSWER_TEXT_PATTERN])
+    if matches is None:
+        execute_query_for_knowledge_graph_helper(response, question)
+
     for match in matches:
         if isinstance(match, tuple):
             match = match[0]  # Extract the first group if the pattern uses groups
@@ -76,11 +79,11 @@ def handle_open_router(question, prompt_template):
         response = post_to_llm(formatted_prompt)
         return json.loads(response.content.decode('utf-8'))
     else:
-        logging.info("Skipping Open Router due to absence of 'monkeypatched' in the question.")
-        return None
+        response = post_to_llm(question.question)
+        return json.loads(response.content.decode('utf-8'))
 
 def ask_question_from_knowledge_graph_helper(question):
-    prompt_template = PromptTemplate(input_variables=["entities", "relationships", "question"], template=prompt.prompt)
+    prompt_template = PromptTemplate(input_variables=["question"], template=prompt.prompt)
     try:
         response = None
         

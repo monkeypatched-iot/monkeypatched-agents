@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import os
 import random
@@ -71,6 +72,22 @@ async def responder(message, history):
 
             if result_dict["question"] == message:
                 cleaned_response = result_dict["answer"]
+                # Replace single quotes with double quotes to make it valid JSON
+                valid_json = cleaned_response.replace("'", '"')
+
+                # Replace None with null for valid JSON
+                valid_json = valid_json.replace('None', 'null')
+
+                # Parse the JSON string
+                try:
+                    data = json.loads(valid_json)
+                    # Extract content from the nested structure
+                    content = data['choices'][0]['message']['content']
+                    print("Content:", content)
+                    cleaned_response = content
+                except json.JSONDecodeError as e:
+                    print(f"Error decoding JSON: {e}")
+
                 logging.info(f"Found result in Qdrant: {cleaned_response}")
             else:
                 # If not found, publish the event and fetch assistant response
